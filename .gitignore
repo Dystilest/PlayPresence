@@ -1,0 +1,15 @@
+# Binaries and build output
+/playpresence
+/playpresence.exe
+dist/
+*.test
+*.out
+
+# Local state and secrets
+config.toml
+.env
+*.log
+
+# Editors
+.idea/
+.vscode/
