@@ -154,10 +154,6 @@ type rawItem struct {
 	ProductionYear    int               `json:"ProductionYear"`
 	RunTimeTicks      int64             `json:"RunTimeTicks"`
 	ProviderIDs       map[string]string `json:"ProviderIds"`
-	Artists           []string          `json:"Artists"`
-	Album             string            `json:"Album"`
-	AlbumArtist       string            `json:"AlbumArtist"`
-	AlbumID           string            `json:"AlbumId"`
 }
 
 type rawPlayState struct {

@@ -13,8 +13,7 @@ import (
 
 // Discord activity types and status display modes.
 const (
-	TypeListening = 2
-	TypeWatching  = 3
+	TypeWatching = 3
 
 	StatusDisplayDetails = 2
 )
@@ -69,11 +68,6 @@ func Render(s session.Session, art string, now time.Time) (Activity, bool) {
 	}
 
 	switch s.Kind {
-	case session.KindTrack:
-		a.Type = TypeListening
-		a.Details = title
-		a.State = s.Artist
-		a.LargeText = s.Album
 	case session.KindEpisode:
 		a.Details = title
 		a.State = episodeLabel(s)
@@ -116,22 +110,15 @@ func buttons(s session.Session) []Button {
 		out = append(out, Button{Label: label, URL: url})
 	}
 
-	switch s.Kind {
-	case session.KindTrack:
-		if s.IDs.MusicBrainz != "" {
-			add("MusicBrainz", "https://musicbrainz.org/recording/"+s.IDs.MusicBrainz)
+	if s.IDs.TMDB != "" {
+		path := "movie"
+		if s.Kind == session.KindEpisode {
+			path = "tv"
 		}
-	default:
-		if s.IDs.TMDB != "" {
-			path := "movie"
-			if s.Kind == session.KindEpisode {
-				path = "tv"
-			}
-			add("TMDb", "https://www.themoviedb.org/"+path+"/"+s.IDs.TMDB)
-		}
-		if s.IDs.IMDB != "" {
-			add("IMDb", "https://www.imdb.com/title/"+s.IDs.IMDB+"/")
-		}
+		add("TMDb", "https://www.themoviedb.org/"+path+"/"+s.IDs.TMDB)
+	}
+	if s.IDs.IMDB != "" {
+		add("IMDb", "https://www.imdb.com/title/"+s.IDs.IMDB+"/")
 	}
 	return out
 }

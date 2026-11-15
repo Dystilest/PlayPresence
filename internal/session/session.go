@@ -14,7 +14,6 @@ type Kind string
 const (
 	KindMovie   Kind = "movie"
 	KindEpisode Kind = "episode"
-	KindTrack   Kind = "track"
 )
 
 // State is the playback state.
@@ -29,10 +28,9 @@ const (
 
 // IDs holds external identifiers used for links and artwork lookups.
 type IDs struct {
-	TMDB        string
-	IMDB        string
-	TVDB        string
-	MusicBrainz string
+	TMDB string
+	IMDB string
+	TVDB string
 }
 
 // Session is a render-ready snapshot of one playback on one media server.
@@ -40,13 +38,11 @@ type Session struct {
 	Source       string
 	Kind         Kind
 	State        State
-	Title        string // movie title, series name or track title
+	Title        string // movie title or series name
 	Year         int
 	Season       int
 	Episode      int
 	EpisodeTitle string
-	Artist       string
-	Album        string
 	IDs          IDs
 	Position     time.Duration
 	Duration     time.Duration
@@ -57,7 +53,7 @@ type Session struct {
 // Validate reports whether the session is well formed.
 func (s Session) Validate() error {
 	switch s.Kind {
-	case KindMovie, KindEpisode, KindTrack:
+	case KindMovie, KindEpisode:
 	default:
 		return fmt.Errorf("session: unknown kind %q", s.Kind)
 	}

@@ -182,8 +182,6 @@ func placeholder(k session.Kind) string {
 	switch k {
 	case session.KindEpisode:
 		return "tv"
-	case session.KindTrack:
-		return "music"
 	default:
 		return "movie"
 	}

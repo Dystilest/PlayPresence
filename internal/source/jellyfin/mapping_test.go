@@ -79,23 +79,9 @@ func TestToSessionEpisodeWithoutSeriesIDsHasNoIDs(t *testing.T) {
 	}
 }
 
-func TestToSessionTrack(t *testing.T) {
-	s := toSession(decode(t, trackJSON), nil, "home")
-
-	if s.Kind != session.KindTrack || s.Title != "Teardrop" || s.Artist != "Massive Attack" || s.Album != "Mezzanine" {
-		t.Errorf("track fields = %+v", s)
-	}
-	if s.IDs.MusicBrainz != "rec-1" {
-		t.Errorf("MusicBrainz = %q, want the recording id", s.IDs.MusicBrainz)
-	}
-}
-
-func TestToSessionTrackWithoutRecordingIDHasNoMusicBrainz(t *testing.T) {
-	rs := decode(t, trackJSON)
-	delete(rs.NowPlayingItem.ProviderIDs, "MusicBrainzRecording")
-
-	if got := toSession(rs, nil, "home").IDs.MusicBrainz; got != "" {
-		t.Errorf("MusicBrainz = %q, want empty", got)
+func TestMusicIsOutOfScopeAndIgnored(t *testing.T) {
+	if _, ok := pick([]rawSession{decode(t, trackJSON)}, "", ""); ok {
+		t.Error("an audio item must not be picked: only movies and episodes are shown")
 	}
 }
 

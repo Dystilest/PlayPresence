@@ -52,7 +52,7 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
 
 ## Which sessions are shown
 
-- Only **movies**, **episodes** and **music tracks** are shown. Other item types (books, live TV channels, music videos) are ignored.
+- Only **movies** and **episodes** (TV series) are shown. Everything else (music, books, live TV channels, music videos) is ignored.
 - If several devices are playing at once, the one with the most recent activity is shown. When it stops while another keeps playing, the other one takes over.
 - By default only the playback of the account you signed in with is shown, even when the token (an administrator's, say) can see other people's sessions. Set `user` to show another Jellyfin user name (case-insensitive) instead, or `user = "*"` to show every session the token can see (the most recently active one wins). An API key has no account behind it, so with an API key every visible session is considered unless `user` is set:
 
@@ -69,7 +69,6 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
 |---|---|
 | Movie | Title and year, poster, progress bar, links to TMDb and IMDb when the server knows the ids |
 | Episode | Series name, season and episode, episode title, season poster (series poster as a fallback), progress bar; the links point to the **series** |
-| Music track | Title, artist and album, progress bar |
 
 Paused playback shows the paused state without a running clock. If the server does not report a duration, the progress bar is left out.
 
@@ -85,7 +84,7 @@ PlayPresence opens a WebSocket on `/socket` and asks the server to push the sess
 
 **`unreachable`.** `doctor` could not connect. Check the URL (scheme and port), that the server is running, and that a firewall is not in the way. The address itself is deliberately not echoed in error messages.
 
-**Nothing shows while something plays.** Check that `user` is not filtering you out, that the item is a movie, episode or track, and run `playpresence doctor`. Then see the [FAQ](faq.md).
+**Nothing shows while something plays.** Check that `user` is not filtering you out, that the item is a movie or an episode, and run `playpresence doctor`. Then see the [FAQ](faq.md).
 
 **Behind a reverse proxy.** Forward WebSocket upgrades on `/socket` for the fastest updates; without them polling is used and changes show up within a few seconds.
 

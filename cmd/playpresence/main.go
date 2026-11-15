@@ -1,4 +1,4 @@
-// Command playpresence shows what you are watching or listening to on Discord.
+// Command playpresence shows what you are watching on Discord.
 package main
 
 import (

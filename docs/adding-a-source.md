@@ -18,7 +18,7 @@ type Source interface {
 - returns an error when the backend is lost (connection refused, token rejected). The orchestrator clears that source's session and restarts it with backoff, so do not retry forever inside `Watch`;
 - must return promptly when `ctx` is cancelled, including while blocked on `out`.
 
-Fill as much of the session as the server knows: kind, title, year, season and episode, artist and album, external ids (`session.IDs`: TMDb, IMDb, TVDB, MusicBrainz), position and duration. The ids drive the buttons and the artwork lookups.
+Fill as much of the session as the server knows: kind, title, year, season and episode, external ids (`session.IDs`: TMDb, IMDb, TVDB), position and duration. The ids drive the buttons and the artwork lookups.
 
 ## Skeleton
 

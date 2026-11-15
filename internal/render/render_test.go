@@ -69,23 +69,6 @@ func TestRenderEpisode(t *testing.T) {
 	}
 }
 
-func TestRenderTrack(t *testing.T) {
-	s := session.Session{
-		Kind: session.KindTrack, State: session.StatePlaying,
-		Title: "Teardrop", Artist: "Massive Attack", Album: "Mezzanine",
-		Position: 30 * time.Second, Duration: 5 * time.Minute,
-	}
-
-	a, _ := Render(s, "", now)
-
-	if a.Type != TypeListening {
-		t.Errorf("type = %d, want %d", a.Type, TypeListening)
-	}
-	if a.Details != "Teardrop" || a.State != "Massive Attack" || a.LargeText != "Mezzanine" {
-		t.Errorf("details/state/largeText = %q/%q/%q", a.Details, a.State, a.LargeText)
-	}
-}
-
 func TestRenderPausedHasNoTimestamps(t *testing.T) {
 	s := movie()
 	s.State = session.StatePaused
@@ -162,11 +145,6 @@ func TestRenderButtons(t *testing.T) {
 			[]Button{{"IMDb", "https://www.imdb.com/title/tt0113277/"}},
 		},
 		{
-			"track musicbrainz",
-			withKind(withIDs(movie(), session.IDs{MusicBrainz: "abc-123"}), session.KindTrack),
-			[]Button{{"MusicBrainz", "https://musicbrainz.org/recording/abc-123"}},
-		},
-		{
 			"no ids no buttons",
 			movie(),
 			nil,
@@ -194,7 +172,7 @@ func TestRenderButtons(t *testing.T) {
 }
 
 func TestRenderNeverExceedsTwoButtons(t *testing.T) {
-	s := withIDs(movie(), session.IDs{TMDB: "1", IMDB: "tt1", MusicBrainz: "m", TVDB: "5"})
+	s := withIDs(movie(), session.IDs{TMDB: "1", IMDB: "tt1", TVDB: "5"})
 
 	a, _ := Render(s, "", now)
 

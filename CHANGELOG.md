@@ -4,6 +4,10 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Changed
+
+- The project is scoped to movies and TV series. Music support was removed: a Jellyfin audio item is ignored, the Listening activity type, MusicBrainz links and the music-related artwork resolvers (iTunes, MusicBrainz, Open Library) are gone, and `music` is no longer a fallback image.
+
 ## [0.1.0-beta.1] - 2026-11-15
 
 First public pre-release: the core and the Jellyfin integration. Plex and Emby are not available yet.

@@ -11,7 +11,7 @@ import (
 func ticksToDuration(ticks int64) time.Duration { return time.Duration(ticks) * 100 }
 
 func supportedType(t string) bool {
-	return t == "Movie" || t == "Episode" || t == "Audio"
+	return t == "Movie" || t == "Episode"
 }
 
 func parseActivity(s string) (time.Time, bool) {
@@ -79,15 +79,6 @@ func toSession(rs rawSession, series map[string]string, sourceName string) sessi
 		}
 		s.Season, s.Episode, s.EpisodeTitle = it.ParentIndexNumber, it.IndexNumber, it.Name
 		s.IDs = session.IDs{TMDB: series["Tmdb"], IMDB: series["Imdb"], TVDB: series["Tvdb"]}
-	case "Audio":
-		s.Kind = session.KindTrack
-		s.Album = it.Album
-		if len(it.Artists) > 0 {
-			s.Artist = it.Artists[0]
-		} else {
-			s.Artist = it.AlbumArtist
-		}
-		s.IDs = session.IDs{MusicBrainz: it.ProviderIDs["MusicBrainzRecording"]}
 	default:
 		s.Kind = session.KindMovie
 		s.IDs = session.IDs{TMDB: it.ProviderIDs["Tmdb"], IMDB: it.ProviderIDs["Imdb"]}

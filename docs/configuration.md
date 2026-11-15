@@ -17,7 +17,7 @@ Credentials (server tokens, optional API keys) are **never** stored in this file
 | `discord.app_id` | string | empty | Numeric ID of your own Discord application (Developer Portal). Optional: by default the application named after your media server is used, so its name shows after "Watching". |
 | `presence.min_interval` | duration | `15s` | Refill time of the update allowance: up to three updates may go out at once, then one per this delay. Cannot be lower than 15s. |
 | `presence.priority` | list of strings | empty | Source names, most important first, used when several sources play at once. Empty means alphabetical. |
-| `art.resolvers` | list of strings | `server`, `plex`, `tvmaze`, `itunes`, `musicbrainz`, `openlibrary` | Artwork resolvers tried in order until one returns an image. Available: server, plex, tvmaze, itunes, musicbrainz, openlibrary, tmdb, fanart, declared_url, upload. |
+| `art.resolvers` | list of strings | `server`, `plex`, `tvmaze` | Artwork resolvers tried in order until one returns an image. Available: server, plex, tvmaze, tmdb, fanart, declared_url, upload. |
 | `sources.<name>.kind` | string | empty | Server type: jellyfin, plex or emby. |
 | `sources.<name>.url` | string | empty | Base URL of the server, http or https. |
 | `sources.<name>.user` | string | empty | Server user whose activity is shown. Empty means the account you signed in with; use "*" to show every session the token can see. |

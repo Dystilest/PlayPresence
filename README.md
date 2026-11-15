@@ -1,6 +1,6 @@
 # PlayPresence
 
-Show what you are watching or listening to on Discord, straight from your own media server. One small program, no account, no API key required.
+Show what you are watching on Discord, straight from your own media server. One small program, no account, no API key required.
 
 > **Status: early development (pre-1.0).** Discord presence, rendering, configuration, secrets, diagnostics and the Jellyfin integration are built and tested. Other media servers are added one at a time; see the table below.
 

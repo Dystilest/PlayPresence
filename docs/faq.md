@@ -23,7 +23,7 @@ It comes back by itself within about a minute (the activity is re-sent periodica
 
 ## The image is the generic one
 
-No artwork was found for that item, or the artwork services in `art.resolvers` are disabled. Upload `movie`, `tv` and `music` images to your Discord application so the fallback looks good (see [installation](installation.md#create-your-discord-application)).
+No artwork was found for that item, or the artwork services in `art.resolvers` are disabled. Upload `movie` and `tv` images to your Discord application so the fallback looks good (see [installation](installation.md#use-your-own-discord-application-optional)).
 
 ## Why is the progress bar not updating every second?
 

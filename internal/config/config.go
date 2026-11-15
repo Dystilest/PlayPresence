@@ -25,7 +25,7 @@ const MinPresenceInterval = 15 * time.Second
 var SourceKinds = []string{"jellyfin", "plex", "emby"}
 
 // ArtResolvers lists the supported artwork resolvers, in default order first.
-var ArtResolvers = []string{"server", "plex", "tvmaze", "itunes", "musicbrainz", "openlibrary", "tmdb", "fanart", "declared_url", "upload"}
+var ArtResolvers = []string{"server", "plex", "tvmaze", "tmdb", "fanart", "declared_url", "upload"}
 
 // Duration is a time.Duration written as text in TOML (for example "15s").
 type Duration time.Duration
@@ -65,7 +65,7 @@ type PresenceConfig struct {
 // ArtConfig configures artwork lookup. API keys are never set here; optional
 // keys (for example TMDb) are stored in the OS credential store.
 type ArtConfig struct {
-	Resolvers []string `toml:"resolvers" doc:"Artwork resolvers tried in order until one returns an image. Available: server, plex, tvmaze, itunes, musicbrainz, openlibrary, tmdb, fanart, declared_url, upload."`
+	Resolvers []string `toml:"resolvers" doc:"Artwork resolvers tried in order until one returns an image. Available: server, plex, tvmaze, tmdb, fanart, declared_url, upload."`
 }
 
 // SourceConfig describes one media server.
@@ -80,7 +80,7 @@ type SourceConfig struct {
 func Default() Config {
 	return Config{
 		Presence: PresenceConfig{MinInterval: Duration(MinPresenceInterval)},
-		Art:      ArtConfig{Resolvers: []string{"server", "plex", "tvmaze", "itunes", "musicbrainz", "openlibrary"}},
+		Art:      ArtConfig{Resolvers: []string{"server", "plex", "tvmaze"}},
 		Sources:  map[string]SourceConfig{},
 	}
 }

@@ -269,7 +269,7 @@ func (s *Source) visible(sessions []rawSession) []rawSession {
 }
 
 // artItemIDs lists the items whose poster can represent the playback, best
-// first: season, series then episode for an episode; the album for a track;
+// first: season, series then episode for an episode;
 // the item itself for a movie.
 func artItemIDs(rs rawSession) []string {
 	it := rs.NowPlayingItem
@@ -282,11 +282,6 @@ func artItemIDs(rs rawSession) []string {
 			}
 		}
 		return ids
-	case "Audio":
-		if it.AlbumID != "" {
-			return []string{it.AlbumID}
-		}
-		return nil
 	}
 	return []string{it.ID}
 }

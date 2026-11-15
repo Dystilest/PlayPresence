@@ -13,8 +13,8 @@ PlayPresence runs on your machine. This page lists everything it can send, and t
 | Destination | What is sent | When |
 |---|---|---|
 | Your media server (Jellyfin, Plex, Emby) | Authenticated read requests for the active sessions (Jellyfin: a WebSocket on `/socket`, or `GET /Sessions` when polling; `GET /Items` once per series for link ids; `GET /System/Info/Public` and `GET /Users/Me` from `doctor`; the Quick Connect endpoints during `auth`) | Continuously while running |
-| Your local Discord client | The activity: title, episode, artist, progress, button links, image URL | When playback changes |
-| Public artwork services (keyless) | Title, year and public identifiers (such as a TMDb or MusicBrainz id) of what you play | Only when an item has no artwork yet; results are cached on disk |
+| Your local Discord client | The activity: title, episode, progress, button links, image URL | When playback changes |
+| Public artwork services (keyless) | Title, year and public identifiers (such as a TMDb id) of what you play | Only when an item has no artwork yet; results are cached on disk |
 
 The artwork services are those listed in `art.resolvers` in your [configuration](configuration.md). Remove any you do not want to use; with none enabled, the generic image is shown.
 
