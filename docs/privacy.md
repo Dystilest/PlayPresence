@@ -25,7 +25,7 @@ Optional features, **off by default**, change this table:
 
 ## What Discord does with it
 
-Rich Presence is public on your Discord profile. Anyone who can see your profile can see the title you are watching, the buttons and the image. Discord's own privacy setting controls who can see your activity. If you do not want a title shown, pause PlayPresence.
+Rich Presence is public on your Discord profile. Anyone who can see your profile can see the title you are watching, the buttons and the image. Discord's own privacy setting controls who can see your activity. If you do not want a title shown, stop PlayPresence (Ctrl+C clears the presence) or change your Discord activity privacy setting.
 
 ## Secrets
 

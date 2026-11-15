@@ -19,7 +19,7 @@ Discord is running but refused the connection. If you set `discord.app_id`, it i
 
 ## The presence disappears after I restart Discord
 
-It comes back by itself within about a minute (the activity is re-sent periodically).
+It comes back by itself, usually within a minute and at worst about 75 seconds (the activity is re-sent periodically).
 
 ## The image is the generic one
 
