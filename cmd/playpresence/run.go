@@ -67,10 +67,6 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
-	if cfg.Discord.AppID == "" {
-		_, _ = fmt.Fprintln(e.stderr, "playpresence: discord.app_id is not set: put it in the config file or pass --app-id")
-		return 1
-	}
 
 	sources, err := buildSources(cfg, *demo, e)
 	if err != nil {
@@ -78,7 +74,7 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 		return 1
 	}
 
-	client := presence.NewIPCClient(cfg.Discord.AppID, e.dial, e.candidates)
+	client := presence.NewIPCClient(cfg.ResolveAppID(), e.dial, e.candidates)
 	defer func() { _ = client.Close() }()
 	minInterval := time.Duration(cfg.Presence.MinInterval)
 	if e.minInterval > 0 {

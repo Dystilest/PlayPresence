@@ -17,12 +17,12 @@ You can already try the whole pipeline with the built-in demo, which shows a sam
 
 ## Quick start
 
-You need the Discord desktop app running on the same machine, with **Settings > Activity Privacy > Share my activity** enabled, and a Discord application (a free, two-minute step, see [Installation](docs/installation.md#create-your-discord-application)).
+You need the Discord desktop app running on the same machine, with **Settings > Activity Privacy > Share my activity** enabled. No Discord application or API key is required (you can use your own, see [Installation](docs/installation.md#use-your-own-discord-application-optional)).
 
 ```bash
 go install github.com/Dystilest/PlayPresence/cmd/playpresence@latest
 playpresence doctor --config path/to/config.toml
-playpresence run --demo --app-id YOUR_APPLICATION_ID
+playpresence run --demo
 ```
 
 Pre-built binaries for Windows, Linux and macOS will be attached to each [release](../../releases) once the first version is tagged.

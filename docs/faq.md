@@ -6,7 +6,7 @@ Run `playpresence doctor` first: it checks the configuration, Discord and the so
 
 - Is the Discord **desktop** app running on the same machine? A web or mobile session is not enough.
 - Is **Settings > Activity Privacy > Share my activity** enabled?
-- Is `discord.app_id` the Application ID from the [Developer Portal](https://discord.com/developers/applications)? `doctor` reports a rejected ID.
+- If you set `discord.app_id`, is it the Application ID from the [Developer Portal](https://discord.com/developers/applications)? `doctor` reports a rejected ID. Remove the key to use the built-in application.
 - You can only see your own presence on your own profile if "Share my activity" is on; ask a friend, or look at your profile card from another account.
 
 ## `doctor` says "Discord is not running"
@@ -15,7 +15,7 @@ No Discord IPC endpoint could be reached. Start the desktop app. On Linux with F
 
 ## `doctor` says the handshake failed
 
-Discord is running but refused the connection, almost always because `discord.app_id` is wrong. Copy it again from the Developer Portal.
+Discord is running but refused the connection. If you set `discord.app_id`, it is almost always wrong: copy it again from the Developer Portal, or remove the key to use the built-in application.
 
 ## The presence disappears after I restart Discord
 

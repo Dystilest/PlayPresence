@@ -4,14 +4,14 @@
 
 - The Discord **desktop** app, running on the same machine as PlayPresence. A browser or phone session is not enough: Rich Presence goes through the local Discord client.
 - **Settings > Activity Privacy > Share my activity** enabled in Discord.
-- A Discord application (below).
+- Nothing else: PlayPresence ships with its own Discord applications. Creating your own (below) is optional.
 
-## Create your Discord application
+## Use your own Discord application (optional)
 
-Discord shows a presence on behalf of an application that you own. It costs nothing.
+Discord shows a presence on behalf of an application, and its name appears after "Watching". PlayPresence uses applications named after your media server by default (for example "Jellyfin"), so you can skip this section. Create your own if you want a different name or your own fallback images; it costs nothing.
 
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and create a **New Application**. The name you choose is what appears in your status ("Watching *name*"), so pick something you like.
-2. Copy the **Application ID** (a long number). This is your `discord.app_id`.
+2. Copy the **Application ID** (a long number). This is your `discord.app_id`; put it in the configuration to use it instead of the built-in application.
 3. Optional but recommended: in **Rich Presence > Art Assets**, upload three square images (1024x1024 recommended) named exactly `movie`, `tv` and `music`. They are shown when no artwork can be found for an item.
 
 ## Install PlayPresence
@@ -46,15 +46,16 @@ This path has not been exercised on a wide range of setups yet; please report wh
 Create a configuration file (see the [reference](configuration.md) for its location and every key):
 
 ```toml
-[discord]
-app_id = "YOUR_APPLICATION_ID"
+[sources.home]
+kind = "jellyfin"
+url = "http://192.168.1.10:8096"
 ```
 
 Then:
 
 ```bash
 playpresence doctor     # checks configuration, Discord and sources
-playpresence run --demo # shows a sample episode on your profile
+playpresence run --demo # shows a sample episode on your profile (no server needed)
 ```
 
 Stop with Ctrl+C: the presence is cleared on exit.

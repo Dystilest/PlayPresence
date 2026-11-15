@@ -198,3 +198,32 @@ func TestReferenceIsUpToDate(t *testing.T) {
 		t.Error("docs/configuration.md is stale; run `go run ./internal/config/gen`")
 	}
 }
+
+func TestResolveAppID(t *testing.T) {
+	src := func(kinds ...string) map[string]SourceConfig {
+		m := map[string]SourceConfig{}
+		for i, k := range kinds {
+			m[string(rune('a'+i))] = SourceConfig{Kind: k, URL: "http://h"}
+		}
+		return m
+	}
+	cases := []struct {
+		name string
+		cfg  Config
+		want string
+	}{
+		{"override wins", Config{Discord: DiscordConfig{AppID: "42"}, Sources: src("jellyfin")}, "42"},
+		{"one jellyfin source", Config{Sources: src("jellyfin")}, JellyfinAppID},
+		{"two jellyfin sources", Config{Sources: src("jellyfin", "jellyfin")}, JellyfinAppID},
+		{"mixed kinds use the generic app", Config{Sources: src("jellyfin", "plex")}, GenericAppID},
+		{"a kind without its own app", Config{Sources: src("plex")}, GenericAppID},
+		{"no sources (demo)", Config{}, GenericAppID},
+		{"disabled sources are ignored", Config{Sources: map[string]SourceConfig{
+			"a": {Kind: "jellyfin", URL: "http://h"}, "b": {Kind: "plex", URL: "http://h", Disabled: true}}}, JellyfinAppID},
+	}
+	for _, c := range cases {
+		if got := c.cfg.ResolveAppID(); got != c.want {
+			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
+		}
+	}
+}

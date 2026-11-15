@@ -13,9 +13,6 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
 1. Add the server to your [configuration](configuration.md). The name you choose after `sources.` identifies it everywhere (`doctor`, `auth`, logs). Spaces and accents are fine when quoted.
 
    ```toml
-   [discord]
-   app_id = "YOUR_APPLICATION_ID"
-
    [sources.home]
    kind = "jellyfin"
    url = "http://192.168.1.10:8096"
@@ -70,8 +67,8 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
 
 | Item | Shown |
 |---|---|
-| Movie | Title and year, progress bar, links to TMDb and IMDb when the server knows the ids |
-| Episode | Series name, season and episode, episode title, progress bar; the links point to the **series** |
+| Movie | Title and year, poster, progress bar, links to TMDb and IMDb when the server knows the ids |
+| Episode | Series name, season and episode, episode title, season poster (series poster as a fallback), progress bar; the links point to the **series** |
 | Music track | Title, artist and album, progress bar |
 
 Paused playback shows the paused state without a running clock. If the server does not report a duration, the progress bar is left out.

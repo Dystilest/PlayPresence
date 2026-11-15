@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Dystilest/PlayPresence/internal/config"
 	"github.com/Dystilest/PlayPresence/internal/presence"
 )
 
@@ -209,14 +210,21 @@ func TestRunWithMissingConfigExplainsWhatToDo(t *testing.T) {
 	}
 }
 
-func TestRunRequiresAnAppID(t *testing.T) {
+func TestRunFallsBackToTheBuiltInApplicationWhenNoAppIDIsSet(t *testing.T) {
 	path := writeConfig(t, "")
+	f := newFakeDiscord()
 	var out, errOut bytes.Buffer
+	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Second)
+	defer cancel()
+	go func() { _ = runWith(ctx, []string{"run", "--demo", "--config", path}, testEnv(f, &out, &errOut)) }()
 
-	code := runWith(context.Background(), []string{"run", "--demo", "--config", path}, testEnv(nil, &out, &errOut))
-
-	if code != 1 || !strings.Contains(errOut.String(), "app_id") {
-		t.Fatalf("code=%d stderr=%q, want exit 1 mentioning discord.app_id", code, errOut.String())
+	select {
+	case m := <-f.got:
+		if m["client_id"] != config.GenericAppID {
+			t.Errorf("handshake client_id = %v, want the built-in application %s", m["client_id"], config.GenericAppID)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatalf("no handshake; stderr=%q", errOut.String())
 	}
 }
 

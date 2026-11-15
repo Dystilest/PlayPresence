@@ -53,7 +53,7 @@ type Config struct {
 
 // DiscordConfig configures the Discord side.
 type DiscordConfig struct {
-	AppID string `toml:"app_id" doc:"Numeric ID of your Discord application (Developer Portal). Required to run."`
+	AppID string `toml:"app_id" doc:"Numeric ID of your own Discord application (Developer Portal). Optional: by default the application named after your media server is used, so its name shows after \"Watching\"."`
 }
 
 // PresenceConfig configures how the presence is published.
@@ -199,4 +199,38 @@ func (c Config) Validate() error {
 		}
 	}
 	return nil
+}
+
+// Discord applications shipped with the program, so that nobody has to create
+// one. Their IDs are public identifiers, not secrets: the name of the
+// application is what Discord shows after "Watching".
+const (
+	GenericAppID  = "1571603122856657027" // "PlayPresence"
+	JellyfinAppID = "1571620090179489945" // "Jellyfin"
+)
+
+// kindApps maps a server kind to the application named after it.
+var kindApps = map[string]string{"jellyfin": JellyfinAppID}
+
+// ResolveAppID returns the Discord application to use: discord.app_id when
+// set; otherwise the application of the server kind when every enabled source
+// is of that same kind; otherwise the generic one.
+func (c Config) ResolveAppID() string {
+	if c.Discord.AppID != "" {
+		return c.Discord.AppID
+	}
+	kind := ""
+	for _, s := range c.Sources {
+		if s.Disabled {
+			continue
+		}
+		if kind != "" && s.Kind != kind {
+			return GenericAppID
+		}
+		kind = s.Kind
+	}
+	if id, ok := kindApps[kind]; ok {
+		return id
+	}
+	return GenericAppID
 }

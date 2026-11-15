@@ -71,12 +71,12 @@ func cmdDoctor(ctx context.Context, args []string, e env) int {
 		report("OK", "config", path)
 	}
 
-	switch cfg.Discord.AppID {
-	case "":
-		report("WARN", "discord", "skipped: discord.app_id is not set")
+	switch {
+	case err != nil:
+		report("WARN", "discord", "skipped: the configuration could not be loaded")
 	default:
 		dctx, cancel := context.WithTimeout(ctx, doctorDiscordTimeout)
-		client := presence.NewIPCClient(cfg.Discord.AppID, e.dial, e.candidates)
+		client := presence.NewIPCClient(cfg.ResolveAppID(), e.dial, e.candidates)
 		err := client.Connect(dctx)
 		_ = client.Close()
 		cancel()
