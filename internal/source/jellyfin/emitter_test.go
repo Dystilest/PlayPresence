@@ -133,3 +133,25 @@ func TestEmitterDoesNotMutateItsInput(t *testing.T) {
 		t.Errorf("input mutated: %+v", in)
 	}
 }
+
+// Jellyfin clients report progress about every 10 s, so the position stays
+// frozen between reports while the wall clock moves on.
+func TestEmitterIgnoresFrozenPositionBetweenClientReports(t *testing.T) {
+	e, c := newTestEmitter()
+	e.next(playing("A", 10*time.Second))
+
+	for i := 0; i < 9; i++ { // frames every second, position never updated
+		c.advance(time.Second)
+		if _, ok := e.next(playing("A", 10*time.Second)); ok {
+			t.Fatalf("frozen position re-sent after %d s", i+1)
+		}
+	}
+	c.advance(time.Second) // the client reports 10 s of progress
+	if _, ok := e.next(playing("A", 20*time.Second)); ok {
+		t.Error("a regular progress report must not be sent as a seek")
+	}
+	c.advance(time.Second)
+	if _, ok := e.next(playing("A", 20*time.Minute)); !ok {
+		t.Error("a real seek must still be sent")
+	}
+}

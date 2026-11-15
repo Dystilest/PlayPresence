@@ -180,3 +180,15 @@ func TestDoctorReportsAnUnreachableJellyfinServer(t *testing.T) {
 		t.Errorf("doctor output echoes the server address:\n%s", out)
 	}
 }
+
+func TestDoctorAcceptsAnAPIKeyThatHasNoUser(t *testing.T) {
+	f := newFakeJellyfin(t)
+	f.meStatus = 400 // Jellyfin answers /Users/Me with 400 for an API key
+	cfg := jfOnlyConfig(t, "home", f.srv.URL, "")
+
+	code, out := doctorLines(t, cfg, memWithToken("home", jfToken))
+
+	if code != 0 || !strings.Contains(out, "OK   source:home") || !strings.Contains(out, "token valid") {
+		t.Errorf("exit %d\n%s", code, out)
+	}
+}

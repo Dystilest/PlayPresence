@@ -149,10 +149,10 @@ func TestPickIgnoresUnsupportedTypesAndIdleSessions(t *testing.T) {
 	idle := decode(t, movieJSON)
 	idle.NowPlayingItem = nil
 
-	if _, ok := pick([]rawSession{book, mv, idle}, ""); ok {
+	if _, ok := pick([]rawSession{book, mv, idle}, "", ""); ok {
 		t.Error("pick returned a session for unsupported or idle input")
 	}
-	if _, ok := pick(nil, ""); ok {
+	if _, ok := pick(nil, "", ""); ok {
 		t.Error("pick returned a session for no input")
 	}
 }
@@ -163,12 +163,12 @@ func TestPickMostRecentlyActiveDeviceWins(t *testing.T) {
 	recent := decode(t, episodeJSON)
 	recent.ID, recent.LastActivityDate = "recent", "2026-11-15T10:30:00.1234567Z"
 
-	got, ok := pick([]rawSession{recent, old}, "")
+	got, ok := pick([]rawSession{recent, old}, "", "")
 	if !ok || got.ID != "recent" {
 		t.Fatalf("got %q ok=%v, want recent", got.ID, ok)
 	}
 	// Stopping the recent device keeps showing the other one.
-	got, ok = pick([]rawSession{old}, "")
+	got, ok = pick([]rawSession{old}, "", "")
 	if !ok || got.ID != "old" {
 		t.Fatalf("got %q ok=%v, want old", got.ID, ok)
 	}
@@ -180,7 +180,7 @@ func TestPickUnparsableDateLosesToParsable(t *testing.T) {
 	good := decode(t, movieJSON)
 	good.ID, good.LastActivityDate = "good", "2026-01-01T00:00:00Z"
 
-	got, _ := pick([]rawSession{bad, good}, "")
+	got, _ := pick([]rawSession{bad, good}, "", "")
 
 	if got.ID != "good" {
 		t.Errorf("got %q, want good", got.ID)
@@ -192,14 +192,14 @@ func TestPickUserFilterIsCaseInsensitive(t *testing.T) {
 	other := decode(t, episodeJSON)
 	other.UserName = "Alice"
 
-	got, ok := pick([]rawSession{other, mine}, "sAmY")
+	got, ok := pick([]rawSession{other, mine}, "sAmY", "")
 	if !ok || got.UserName != "Samy" {
 		t.Fatalf("got %q ok=%v", got.UserName, ok)
 	}
-	if _, ok := pick([]rawSession{other, mine}, "nobody"); ok {
+	if _, ok := pick([]rawSession{other, mine}, "nobody", ""); ok {
 		t.Error("filter matched nobody but pick returned a session")
 	}
-	if _, ok := pick([]rawSession{other, mine}, ""); !ok {
+	if _, ok := pick([]rawSession{other, mine}, "", ""); !ok {
 		t.Error("empty filter must accept every visible session")
 	}
 }
@@ -215,5 +215,24 @@ func TestNeedsSeries(t *testing.T) {
 	}
 	if _, ok := needsSeries(decode(t, movieJSON)); ok {
 		t.Error("movie must not need a series lookup")
+	}
+}
+
+func TestPickKeepsTheDisplayedSessionWhileItStillPlays(t *testing.T) {
+	a := decode(t, movieJSON)
+	a.ID, a.LastActivityDate = "a", "2026-11-15T10:00:00Z"
+	b := decode(t, episodeJSON)
+	b.ID, b.LastActivityDate = "b", "2026-11-15T10:00:05Z" // more recent
+
+	got, _ := pick([]rawSession{a, b}, "", "a")
+	if got.ID != "a" {
+		t.Errorf("got %q, want the sticky session a", got.ID)
+	}
+	got, _ = pick([]rawSession{b}, "", "a") // a is gone: re-pick
+	if got.ID != "b" {
+		t.Errorf("got %q, want b after a disappeared", got.ID)
+	}
+	if got, _ = pick([]rawSession{a, b}, "nobody", "a"); got.ID != "" {
+		t.Error("the user filter must beat stickiness")
 	}
 }

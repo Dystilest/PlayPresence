@@ -17,6 +17,7 @@ type emitter struct {
 	refresh time.Duration
 
 	last   *session.Session
+	seen   time.Duration // position of the previous snapshot
 	sentAt time.Time
 }
 
@@ -28,6 +29,11 @@ func newEmitter(now func() time.Time, refresh time.Duration) *emitter {
 // the session to send, or ok=false when nothing should be sent.
 func (e *emitter) next(s *session.Session) (session.Session, bool) {
 	now := e.now()
+	defer func() {
+		if s != nil {
+			e.seen = s.Position
+		}
+	}()
 	if s == nil {
 		if e.last == nil {
 			return session.Session{}, false
@@ -64,7 +70,9 @@ func (e *emitter) changed(s session.Session, now time.Time) bool {
 	if drift < 0 {
 		drift = -drift
 	}
-	if drift > driftTolerance {
+	// Clients report progress about every 10 s: an unchanged position is a
+	// stale report, not evidence of a seek.
+	if drift > driftTolerance && s.Position != e.seen {
 		return true
 	}
 	return now.Sub(e.sentAt) >= e.refresh

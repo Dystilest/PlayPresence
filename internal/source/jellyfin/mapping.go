@@ -22,8 +22,9 @@ func parseActivity(s string) (time.Time, bool) {
 // pick chooses the session to display: only sessions playing a supported item,
 // restricted to user (case-insensitive) when non-empty, the most recently
 // active one first. A session with an unparsable activity date loses to one
-// with a valid date.
-func pick(sessions []rawSession, user string) (rawSession, bool) {
+// with a valid date. The session whose Id is sticky, when still eligible, wins
+// over every other so two playing devices do not take turns on screen.
+func pick(sessions []rawSession, user, sticky string) (rawSession, bool) {
 	var best rawSession
 	var bestTime time.Time
 	var bestValid, found bool
@@ -33,6 +34,9 @@ func pick(sessions []rawSession, user string) (rawSession, bool) {
 		}
 		if user != "" && !strings.EqualFold(rs.UserName, user) {
 			continue
+		}
+		if sticky != "" && rs.ID == sticky {
+			return rs, true // keep showing the session already on screen
 		}
 		t, valid := parseActivity(rs.LastActivityDate)
 		better := !found ||

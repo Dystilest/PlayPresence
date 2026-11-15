@@ -8,11 +8,12 @@ import (
 // quickConnectState drives the fake Quick Connect endpoints (guarded by
 // fakeServer.mu).
 type quickConnectState struct {
-	enabled      bool
-	pendingPolls int // Connect answers "not authenticated" this many times
-	polls        int
-	initiated    int
-	authStatus   int // non-zero: AuthenticateWithQuickConnect answers with it
+	enabled         bool
+	pendingPolls    int // Connect answers "not authenticated" this many times
+	polls           int
+	initiated       int
+	initiateGetOnly bool // POST /Initiate answers 405 (older servers)
+	authStatus      int  // non-zero: AuthenticateWithQuickConnect answers with it
 }
 
 const (
@@ -28,7 +29,10 @@ func (f *fakeServer) registerQuickConnect(mux *http.ServeMux) {
 		_ = json.NewEncoder(w).Encode(en)
 	})
 	mux.HandleFunc("/QuickConnect/Initiate", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
+		f.mu.Lock()
+		getOnly := f.qc.initiateGetOnly
+		f.mu.Unlock()
+		if (getOnly && r.Method != http.MethodGet) || (!getOnly && r.Method != http.MethodPost) {
 			http.Error(w, "method", http.StatusMethodNotAllowed)
 			return
 		}

@@ -36,7 +36,7 @@ type fakeJellyfin struct {
 	polls      int
 	validToken string
 	sessions   string
-	user       string // /Sessions user filter probe: last Authorization seen
+	meStatus   int // non-zero: /Users/Me answers with it (API keys have no user)
 }
 
 var jfTokenRE = regexp.MustCompile(`Token="([^"]*)"`)
@@ -75,6 +75,13 @@ func newFakeJellyfin(t *testing.T) *fakeJellyfin {
 		f.mu.Unlock()
 		if !ok {
 			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		f.mu.Lock()
+		ms := f.meStatus
+		f.mu.Unlock()
+		if ms != 0 {
+			http.Error(w, "no user", ms)
 			return
 		}
 		_ = json.NewEncoder(w).Encode(map[string]string{"Id": "u1", "Name": "Samy"})

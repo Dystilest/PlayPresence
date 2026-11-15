@@ -111,7 +111,7 @@ func (c *Client) do(ctx context.Context, method, path string, q url.Values, body
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return fmt.Errorf("jellyfin: %s %s: %w", method, path, ErrUnauthorized)
 	case resp.StatusCode >= 300:
-		return fmt.Errorf("jellyfin: %s %s: unexpected status %d", method, path, resp.StatusCode)
+		return fmt.Errorf("jellyfin: %s %s: %w", method, path, statusError(resp.StatusCode))
 	}
 	data, err := io.ReadAll(io.LimitReader(resp.Body, maxBody+1))
 	if err != nil {
@@ -214,3 +214,8 @@ func (c *Client) Me(ctx context.Context) (User, error) {
 	err := c.do(ctx, http.MethodGet, "Users/Me", nil, nil, &u, true)
 	return u, err
 }
+
+// statusError is an unexpected HTTP status; it carries no host or token.
+type statusError int
+
+func (s statusError) Error() string { return fmt.Sprintf("unexpected status %d", int(s)) }

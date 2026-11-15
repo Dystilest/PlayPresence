@@ -73,3 +73,14 @@ func TestQuickConnectSecretNeverShownNorInErrors(t *testing.T) {
 		}
 	}
 }
+
+func TestQuickConnectFallsBackToGetOnOlderServers(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.qc.initiateGetOnly = true
+
+	login, err := QuickConnect(ctx(t), f.URL(), testDevice, nil, func(string) {}, time.Millisecond)
+
+	if err != nil || login.Token != "issued-token" {
+		t.Fatalf("login = %+v, err = %v", login, err)
+	}
+}

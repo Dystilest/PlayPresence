@@ -32,7 +32,15 @@ func checkJellyfin(ctx context.Context, name string, sc config.SourceConfig, st 
 	case errors.Is(err, jellyfin.ErrUnauthorized):
 		return "FAIL", fmt.Sprintf("token rejected (run `playpresence auth jellyfin --source %s`)", name)
 	case err != nil:
-		return "FAIL", fmt.Sprintf("unreachable (%v)", err)
+		// An API key has no user, so /Users/Me can fail on a perfectly good key:
+		// fall back to a call every valid token may make.
+		if _, serr := c.Sessions(cctx); serr != nil {
+			if errors.Is(serr, jellyfin.ErrUnauthorized) {
+				return "FAIL", fmt.Sprintf("token rejected (run `playpresence auth jellyfin --source %s`)", name)
+			}
+			return "FAIL", fmt.Sprintf("unreachable (%v)", serr)
+		}
+		return "OK", fmt.Sprintf("Jellyfin %s reachable, token valid (API key)", info.Version)
 	}
 	return "OK", fmt.Sprintf("Jellyfin %s reachable, token valid for %s", info.Version, u.Name)
 }

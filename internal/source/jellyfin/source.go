@@ -37,6 +37,7 @@ type Source struct {
 
 	series map[string]map[string]string // series id -> provider ids
 	failed map[string]time.Time         // series id -> last failed lookup
+	shown  string                       // Id of the session currently displayed
 }
 
 // New builds a Source around c.
@@ -163,11 +164,13 @@ func (s *Source) poll(ctx context.Context, out chan<- session.Session, em *emitt
 // handle maps the visible sessions to at most one update and sends it.
 func (s *Source) handle(ctx context.Context, em *emitter, sessions []rawSession, out chan<- session.Session) error {
 	var cur *session.Session
-	if rs, ok := pick(sessions, s.opt.User); ok {
+	s.shown = ""
+	if rs, ok := pick(sessions, s.opt.User, s.shown); ok {
 		var series map[string]string
 		if id, need := needsSeries(rs); need {
 			series = s.seriesIDs(ctx, rs.UserID, id)
 		}
+		s.shown = rs.ID
 		v := toSession(rs, series, s.opt.Name)
 		cur = &v
 	}

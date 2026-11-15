@@ -39,7 +39,13 @@ func QuickConnect(ctx context.Context, baseURL string, dev Device, hc *http.Clie
 		Secret string `json:"Secret"`
 		Code   string `json:"Code"`
 	}
-	if err := c.do(ctx, http.MethodPost, "QuickConnect/Initiate", nil, nil, &init, false); err != nil {
+	err = c.do(ctx, http.MethodPost, "QuickConnect/Initiate", nil, nil, &init, false)
+	var se statusError
+	if errors.As(err, &se) && se == http.StatusMethodNotAllowed {
+		// Servers before 10.9 expose Initiate as GET.
+		err = c.do(ctx, http.MethodGet, "QuickConnect/Initiate", nil, nil, &init, false)
+	}
+	if err != nil {
 		return Login{}, err
 	}
 	if init.Secret == "" || init.Code == "" {
