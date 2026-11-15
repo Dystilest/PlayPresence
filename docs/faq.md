@@ -36,3 +36,15 @@ Rich Presence works only through the desktop Discord client on the machine where
 ## Where are my passwords stored?
 
 In your operating system's credential store, never in the configuration file. See [privacy](privacy.md).
+
+## `run` says "not signed in"
+
+The source has no stored token yet (or it was removed). Run `playpresence auth jellyfin --source NAME`, using the name from your `[sources.NAME]` section.
+
+## `run` prints "token rejected" and nothing shows
+
+The server no longer accepts the stored token (revoked, or the server was reinstalled). Sign in again with `playpresence auth jellyfin --source NAME`; the other sources keep running meanwhile.
+
+## It shows what someone else is watching
+
+On a Jellyfin server, an administrator token sees every user's sessions. Set `user = "your name"` in the source section; see [Jellyfin](jellyfin.md#which-sessions-are-shown).

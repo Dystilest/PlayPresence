@@ -2,13 +2,13 @@
 
 Show what you are watching or listening to on Discord, straight from your own media server. One small program, no account, no API key required.
 
-> **Status: early development (pre-1.0).** The core (Discord presence, rendering, configuration, secrets, diagnostics) is built and tested. The media server integrations are being added one at a time; see the table below.
+> **Status: early development (pre-1.0).** Discord presence, rendering, configuration, secrets, diagnostics and the Jellyfin integration are built and tested. Other media servers are added one at a time; see the table below.
 
 ## Supported servers
 
 | Server | Status |
 |---|---|
-| Jellyfin | In progress |
+| [Jellyfin](docs/jellyfin.md) | Supported (pre-1.0) |
 | Plex | Planned |
 | Emby | Planned |
 | Kodi and others | Planned after 1.0 |

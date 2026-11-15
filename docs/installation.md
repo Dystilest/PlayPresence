@@ -60,3 +60,15 @@ playpresence run --demo # shows a sample episode on your profile
 Stop with Ctrl+C: the presence is cleared on exit.
 
 Media server setup guides are added as each integration ships.
+
+## Connect a media server
+
+Add a `[sources.NAME]` section to the configuration, sign in, then check:
+
+```bash
+playpresence auth jellyfin --source NAME
+playpresence doctor
+playpresence run
+```
+
+Each server has its own guide: [Jellyfin](jellyfin.md).
