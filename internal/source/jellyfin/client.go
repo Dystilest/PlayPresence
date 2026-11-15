@@ -103,11 +103,7 @@ func (c *Client) do(ctx context.Context, method, path string, q url.Values, body
 
 	resp, err := c.hc.Do(req)
 	if err != nil {
-		var ue *url.Error
-		if errors.As(err, &ue) {
-			err = ue.Err // drop the URL: it contains the host
-		}
-		return fmt.Errorf("jellyfin: %s %s: request failed: %w", method, path, err)
+		return fmt.Errorf("jellyfin: %s %s: request failed: %w", method, path, redact(err))
 	}
 	defer resp.Body.Close()
 
