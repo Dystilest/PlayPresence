@@ -69,7 +69,7 @@ func runWith(ctx context.Context, args []string, e env) int {
 	}
 	switch args[0] {
 	case "version":
-		fmt.Fprintf(e.stdout, "playpresence %s (%s)\n", version.Version, version.Commit)
+		_, _ = fmt.Fprintf(e.stdout, "playpresence %s (%s)\n", version.Version, version.Commit)
 		return 0
 	case "run":
 		return cmdRun(ctx, args[1:], e)
@@ -78,7 +78,7 @@ func runWith(ctx context.Context, args []string, e env) int {
 	case "auth":
 		return cmdAuth(ctx, args[1:], e)
 	default:
-		fmt.Fprintf(e.stderr, "unknown command %q\n%s", args[0], usage)
+		_, _ = fmt.Fprintf(e.stderr, "unknown command %q\n%s", args[0], usage)
 		return 2
 	}
 }

@@ -26,7 +26,7 @@ func Reference() string {
 	b.WriteString("Credentials (server tokens, optional API keys) are **never** stored in this file: they are kept in the OS credential store. A file containing a token or key field is refused.\n\n")
 	b.WriteString("| Key | Type | Default | Description |\n|---|---|---|---|\n")
 	for _, r := range rows {
-		fmt.Fprintf(&b, "| `%s` | %s | %s | %s |\n", r.key, r.typ, r.def, r.doc)
+		_, _ = fmt.Fprintf(&b, "| `%s` | %s | %s | %s |\n", r.key, r.typ, r.def, r.doc)
 	}
 	return b.String()
 }

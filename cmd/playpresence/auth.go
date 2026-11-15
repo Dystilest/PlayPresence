@@ -116,12 +116,12 @@ func cmdAuth(ctx context.Context, args []string, e env) int {
 	}
 	st, err := openSecrets(e)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 	dev, err := jellyfinDevice(st)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 
@@ -132,12 +132,12 @@ func cmdAuth(ctx context.Context, args []string, e env) int {
 		login, err = loginWithQuickConnect(ctx, e, sc.URL, dev)
 	}
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 
 	if err := st.Set(secretService, tokenKey(*name), login.Token); err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: store token: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: store token: %v\n", err)
 		return 1
 	}
 	if login.UserID != "" {
@@ -146,11 +146,11 @@ func cmdAuth(ctx context.Context, args []string, e env) int {
 		err = st.Delete(secretService, userIDKey(*name))
 	}
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: store user id: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: store user id: %v\n", err)
 		return 1
 	}
 	if login.UserName != "" {
-		fmt.Fprintf(e.stdout, "Signed in as %s. The token is stored in the credential store, not in the configuration.\n", login.UserName)
+		_, _ = fmt.Fprintf(e.stdout, "Signed in as %s. The token is stored in the credential store, not in the configuration.\n", login.UserName)
 	} else {
 		_, _ = fmt.Fprintln(e.stdout, "Token verified and stored in the credential store, not in the configuration.")
 	}
@@ -165,7 +165,7 @@ func loginWithQuickConnect(ctx context.Context, e env, url string, dev jellyfin.
 	ctx, cancel := context.WithTimeout(ctx, quickConnectTimeout)
 	defer cancel()
 	show := func(code string) {
-		fmt.Fprintf(e.stdout, "Quick Connect code: %s\nIn a Jellyfin app where you are signed in, open your profile menu, choose Quick Connect and enter this code. Waiting...\n", code)
+		_, _ = fmt.Fprintf(e.stdout, "Quick Connect code: %s\nIn a Jellyfin app where you are signed in, open your profile menu, choose Quick Connect and enter this code. Waiting...\n", code)
 	}
 	login, err := jellyfin.QuickConnect(ctx, url, dev, nil, show, poll)
 	switch {

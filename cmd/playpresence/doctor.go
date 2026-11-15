@@ -58,7 +58,7 @@ func cmdDoctor(ctx context.Context, args []string, e env) int {
 
 	failed := false
 	report := func(status, check, msg string) {
-		fmt.Fprintf(e.stdout, "%-4s %-8s %s\n", status, check, msg)
+		_, _ = fmt.Fprintf(e.stdout, "%-4s %-8s %s\n", status, check, msg)
 		if status == "FAIL" {
 			failed = true
 		}

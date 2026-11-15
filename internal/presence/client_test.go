@@ -155,7 +155,7 @@ func TestConnectOnlyPerformsTheHandshake(t *testing.T) {
 func TestRefusedHandshakeIsNotReportedAsNotRunning(t *testing.T) {
 	f := &fakeDiscord{t: t, refuse: true}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	err := c.Connect(ctx(t))
 
@@ -185,7 +185,7 @@ func TestRejectedActivityIsReportedAndNotRetriedOnAFreshConnection(t *testing.T)
 		return map[string]any{"evt": "ERROR", "data": map[string]any{"code": 4000, "message": "bad details"}}
 	}}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	if err := c.SetActivity(ctx(t), render.Activity{Details: "fine"}); err != nil {
 		t.Fatal(err)
 	}
@@ -213,7 +213,7 @@ func TestRejectedActivityIsReportedAndNotRetriedOnAFreshConnection(t *testing.T)
 func TestClearSendsNullActivity(t *testing.T) {
 	f := &fakeDiscord{t: t}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if err := c.Clear(ctx(t)); err != nil {
 		t.Fatalf("Clear: %v", err)
@@ -231,7 +231,7 @@ func TestDiscordErrorEventIsReturned(t *testing.T) {
 		return map[string]any{"evt": "ERROR", "data": map[string]any{"code": 4000, "message": "bad activity"}}
 	}}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	err := c.SetActivity(ctx(t), render.Activity{Details: "x"})
 
@@ -253,7 +253,7 @@ func TestNoPipeReturnsErrNotRunning(t *testing.T) {
 func TestSilentServerTimesOut(t *testing.T) {
 	f := &fakeDiscord{t: t, silent: true}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	short, cancel := context.WithTimeout(context.Background(), 150*time.Millisecond)
 	defer cancel()
 
@@ -271,7 +271,7 @@ func TestSilentServerTimesOut(t *testing.T) {
 func TestReconnectsAfterConnectionLoss(t *testing.T) {
 	f := &fakeDiscord{t: t}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	if err := c.SetActivity(ctx(t), render.Activity{Details: "one"}); err != nil {
 		t.Fatal(err)
 	}

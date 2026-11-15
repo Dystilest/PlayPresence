@@ -56,24 +56,24 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 
 	cfg, _, err := loadConfig(*cfgPath, *demo)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 	if *appID != "" {
 		cfg.Discord.AppID = *appID
 	}
 	if err := cfg.Validate(); err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 	if cfg.Discord.AppID == "" {
-		fmt.Fprintln(e.stderr, "playpresence: discord.app_id is not set: put it in the config file or pass --app-id")
+		_, _ = fmt.Fprintln(e.stderr, "playpresence: discord.app_id is not set: put it in the config file or pass --app-id")
 		return 1
 	}
 
 	sources, err := buildSources(cfg, *demo, e)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 
@@ -100,7 +100,7 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 	<-pubDone // the publisher clears the presence before returning
 
 	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 	return 0
@@ -120,7 +120,7 @@ func publishErrorReporter(w io.Writer) func(error) {
 			return
 		}
 		last = msg
-		fmt.Fprintf(w, "playpresence: %s\n", msg)
+		_, _ = fmt.Fprintf(w, "playpresence: %s\n", msg)
 	}
 }
 
@@ -141,7 +141,7 @@ func sourceErrorReporter(w io.Writer) func(name string, err error) {
 			return
 		}
 		last[name] = msg
-		fmt.Fprintf(w, "playpresence: source %s: %s\n", name, msg)
+		_, _ = fmt.Fprintf(w, "playpresence: source %s: %s\n", name, msg)
 	}
 }
 
