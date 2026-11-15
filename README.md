@@ -25,7 +25,7 @@ playpresence doctor --config path/to/config.toml
 playpresence run --demo
 ```
 
-Pre-built binaries for Windows, Linux and macOS will be attached to each [release](../../releases) once the first version is tagged.
+Pre-built binaries for Windows, Linux and macOS are attached to each [release](../../releases) (currently a pre-release: expect rough edges and please report them).
 
 `playpresence doctor` checks your configuration, that Discord is reachable, and the sources, and tells you what to fix.
 
