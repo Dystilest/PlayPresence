@@ -27,7 +27,7 @@ No artwork was found for that item, or the artwork services in `art.resolvers` a
 
 ## Why is the progress bar not updating every second?
 
-It does not need to: Discord draws the bar from a start and an end time. PlayPresence only updates when something changes (pause, seek, next item), and never more often than every 15 seconds.
+It does not need to: Discord draws the bar from a start and an end time. PlayPresence only updates when something changes (pause, seek, next item), and sends at most three updates back to back, then one every 15 seconds, which keeps it within Discord's rate limit.
 
 ## Can I run it on a server?
 
