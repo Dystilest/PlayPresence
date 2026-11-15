@@ -59,11 +59,16 @@ type Publisher struct {
 	dirty    bool
 }
 
-// NewPublisher builds a publisher that sends at most one update per minInterval.
+// updateBurst is how many updates may go out back to back (a pause or a seek
+// right after a change) before the minInterval spacing applies.
+const updateBurst = 3
+
+// NewPublisher builds a publisher that sends at most updateBurst updates at once
+// and then one per minInterval.
 func NewPublisher(c Client, minInterval time.Duration, clock Clock) *Publisher {
 	return &Publisher{
 		c:           c,
-		lim:         NewLimiter(minInterval, clock.Now),
+		lim:         NewLimiter(minInterval, updateBurst, clock.Now),
 		clock:       clock,
 		backoffBase: defaultBackoffBase,
 		backoffCap:  defaultBackoffCap,

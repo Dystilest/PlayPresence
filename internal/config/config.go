@@ -58,7 +58,7 @@ type DiscordConfig struct {
 
 // PresenceConfig configures how the presence is published.
 type PresenceConfig struct {
-	MinInterval Duration `toml:"min_interval" doc:"Minimum delay between Discord updates. Cannot be lower than 15s."`
+	MinInterval Duration `toml:"min_interval" doc:"Refill time of the update allowance: up to three updates may go out at once, then one per this delay. Cannot be lower than 15s."`
 	Priority    []string `toml:"priority" doc:"Source names, most important first, used when several sources play at once. Empty means alphabetical."`
 }
 

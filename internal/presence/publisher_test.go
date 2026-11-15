@@ -100,22 +100,37 @@ func TestRapidUpdatesRespectIntervalAndLastWins(t *testing.T) {
 	f := &fakeClient{}
 	p := newPub(f, 60*time.Millisecond)
 	start(t, p)
-	p.Update(act("first"))
-	eventually(t, "first sent", func() bool { return len(f.snapshot()) == 1 })
+	// Use up the burst of immediate updates.
+	for i, d := range []string{"first", "burst1", "burst2"} {
+		p.Update(act(d))
+		eventually(t, "burst update sent", func() bool { return len(f.snapshot()) == i+1 })
+	}
 
 	for _, d := range []string{"b1", "b2", "b3", "b4", "b5"} {
 		p.Update(act(d))
 	}
 
-	eventually(t, "second sent", func() bool { return len(f.snapshot()) == 2 })
+	eventually(t, "fourth sent", func() bool { return len(f.snapshot()) == 4 })
 	time.Sleep(100 * time.Millisecond)
 	calls := f.snapshot()
-	if len(calls) != 2 || calls[1].details != "b5" {
-		t.Fatalf("calls = %+v, want first then b5 only", calls)
+	if len(calls) != 4 || calls[3].details != "b5" {
+		t.Fatalf("calls = %+v, want the burst then b5 only", calls)
 	}
-	if gap := calls[1].at.Sub(calls[0].at); gap < 55*time.Millisecond {
-		t.Errorf("gap between updates = %v, want >= interval", gap)
+	if gap := calls[3].at.Sub(calls[2].at); gap < 40*time.Millisecond {
+		t.Errorf("gap after the burst = %v, want the refill interval", gap)
 	}
+}
+
+func TestAPauseRightAfterAChangeIsNotDelayed(t *testing.T) {
+	f := &fakeClient{}
+	p := newPub(f, 5*time.Second)
+	start(t, p)
+	p.Update(act("playing"))
+	eventually(t, "first sent", func() bool { return len(f.snapshot()) == 1 })
+
+	p.Update(act("paused"))
+
+	eventually(t, "pause sent within the burst", func() bool { return len(f.snapshot()) == 2 })
 }
 
 func TestIdenticalActivityIsNotResent(t *testing.T) {
