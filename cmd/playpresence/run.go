@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 	"sort"
 	"sync"
 	"time"
@@ -178,7 +179,7 @@ func buildSources(cfg config.Config, demo bool, e env) ([]source.Source, error) 
 				return nil, err
 			}
 		}
-		src, err := buildJellyfin(name, sc, st, e.pollInterval)
+		src, err := buildJellyfin(name, sc, st, e.pollInterval, slices.Contains(cfg.Art.Resolvers, "server"))
 		if err != nil {
 			return nil, err
 		}
@@ -208,12 +209,12 @@ func jellyfinClient(name string, sc config.SourceConfig, st secrets.Store) (*jel
 	return c, nil
 }
 
-func buildJellyfin(name string, sc config.SourceConfig, st secrets.Store, poll time.Duration) (source.Source, error) {
+func buildJellyfin(name string, sc config.SourceConfig, st secrets.Store, poll time.Duration, art bool) (source.Source, error) {
 	c, err := jellyfinClient(name, sc, st)
 	if err != nil {
 		return nil, err
 	}
-	return jellyfin.New(c, jellyfin.Options{Name: name, User: sc.User, PollInterval: poll}), nil
+	return jellyfin.New(c, jellyfin.Options{Name: name, User: sc.User, PollInterval: poll, Art: art}), nil
 }
 
 func demoSession() session.Session {

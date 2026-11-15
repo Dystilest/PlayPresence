@@ -379,3 +379,48 @@ func TestAPIKeyWithoutAUserSeesEverySession(t *testing.T) {
 		t.Errorf("got %q, want no owner filtering without a user", s.Title)
 	}
 }
+
+func TestMoviePosterComesFromTheServerAndIsCached(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.posters["m1"] = "https://image.example/amelie.jpg"
+	f.setSessions(playingMovie)
+	out, _, _ := run(t, f, "good-token", Options{Art: true})
+	if s := recv(t, out); s.ArtURL != "https://image.example/amelie.jpg" {
+		t.Fatalf("ArtURL = %q", s.ArtURL)
+	}
+
+	f.setSessions(pausedMovie)
+	f.push()
+	recv(t, out)
+
+	if n := f.count("/Items/m1/RemoteImages"); n != 1 {
+		t.Errorf("poster looked up %d times, want 1", n)
+	}
+}
+
+func TestEpisodePosterIsTheSeriesPoster(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.posters["ser1"] = "https://image.example/severance.jpg"
+	f.setSessions(playingEpisode)
+
+	out, _, _ := run(t, f, "good-token", Options{Art: true})
+
+	if s := recv(t, out); s.ArtURL != "https://image.example/severance.jpg" {
+		t.Errorf("ArtURL = %q", s.ArtURL)
+	}
+}
+
+func TestPosterDisabledMakesNoRequest(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.posters["m1"] = "https://image.example/amelie.jpg"
+	f.setSessions(playingMovie)
+
+	out, _, _ := run(t, f, "good-token", Options{})
+
+	if s := recv(t, out); s.ArtURL != "" {
+		t.Errorf("ArtURL = %q, want none", s.ArtURL)
+	}
+	if n := f.count("/Items/m1/RemoteImages"); n != 0 {
+		t.Errorf("%d poster requests with art disabled", n)
+	}
+}

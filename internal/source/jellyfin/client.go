@@ -156,6 +156,7 @@ type rawItem struct {
 	Artists           []string          `json:"Artists"`
 	Album             string            `json:"Album"`
 	AlbumArtist       string            `json:"AlbumArtist"`
+	AlbumID           string            `json:"AlbumId"`
 }
 
 type rawPlayState struct {
@@ -219,3 +220,27 @@ func (c *Client) Me(ctx context.Context) (User, error) {
 type statusError int
 
 func (s statusError) Error() string { return fmt.Sprintf("unexpected status %d", int(s)) }
+
+// maxArtURL is the longest image URL Discord accepts.
+const maxArtURL = 256
+
+// PosterURL asks the server for the public poster URLs it knows for an item
+// (GET /Items/{id}/RemoteImages) and returns the first https one, or "" when
+// there is none. These are third-party image hosts, never the server itself.
+func (c *Client) PosterURL(ctx context.Context, itemID string) (string, error) {
+	q := url.Values{"type": {"Primary"}, "limit": {"10"}}
+	var out struct {
+		Images []struct {
+			URL string `json:"Url"`
+		} `json:"Images"`
+	}
+	if err := c.do(ctx, http.MethodGet, "Items/"+url.PathEscape(itemID)+"/RemoteImages", q, nil, &out, true); err != nil {
+		return "", err
+	}
+	for _, im := range out.Images {
+		if strings.HasPrefix(im.URL, "https://") && len(im.URL) <= maxArtURL {
+			return im.URL, nil
+		}
+	}
+	return "", nil
+}

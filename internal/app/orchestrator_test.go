@@ -290,3 +290,20 @@ func TestCancellationIsNotReportedAsAFailure(t *testing.T) {
 		t.Errorf("cancellation reported as failure: %v", got)
 	}
 }
+
+func TestArtUrlFromTheSourceBeatsTheResolvers(t *testing.T) {
+	f, up, art := newFeed("home"), &recorder{}, &fakeArt{url: "https://img.example/resolver.jpg"}
+	run(t, orch([]source.Source{f}, nil, art, up))
+	s := movie("Heat", session.StatePlaying, 10*time.Minute)
+	s.ArtURL = "https://img.example/from-server.jpg"
+
+	f.in <- s
+
+	eventually(t, "an update", func() bool { return up.last() != nil })
+	if got := up.last().LargeImage; got != "https://img.example/from-server.jpg" {
+		t.Errorf("LargeImage = %q", got)
+	}
+	if n := art.n.Load(); n != 0 {
+		t.Errorf("resolver called %d times although the source gave an image", n)
+	}
+}

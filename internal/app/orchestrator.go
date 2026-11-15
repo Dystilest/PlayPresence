@@ -164,6 +164,9 @@ func (o *Orchestrator) choose(latest []*session.Session) (*session.Session, int)
 }
 
 func (o *Orchestrator) resolveArt(ctx context.Context, s session.Session) string {
+	if s.ArtURL != "" {
+		return s.ArtURL // the source already knows a public image
+	}
 	if o.art != nil {
 		rctx, cancel := context.WithTimeout(ctx, artTimeout)
 		defer cancel()

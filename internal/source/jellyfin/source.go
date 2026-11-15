@@ -27,6 +27,7 @@ type Options struct {
 	User         string        // user name to show; empty means the token's own user, "*" every visible session
 	PollInterval time.Duration // REST polling period when WebSocket is unavailable (default 5 s)
 	Refresh      time.Duration // heartbeat re-send period (default 30 s)
+	Art          bool          // ask the server for public poster URLs
 }
 
 // Source watches a Jellyfin server over WebSocket, falling back to polling.
@@ -35,10 +36,12 @@ type Source struct {
 	opt Options
 	now func() time.Time
 
-	series map[string]map[string]string // series id -> provider ids
-	failed map[string]time.Time         // series id -> last failed lookup
-	shown  string                       // Id of the session currently displayed
-	owner  string                       // user id of the token (empty: unknown, e.g. an API key)
+	series       map[string]map[string]string // series id -> provider ids
+	failed       map[string]time.Time         // series id -> last failed lookup
+	posters      map[string]string            // item id -> poster URL ("" when none)
+	posterFailed map[string]time.Time
+	shown        string // Id of the session currently displayed
+	owner        string // user id of the token (empty: unknown, e.g. an API key)
 }
 
 // New builds a Source around c.
@@ -54,8 +57,9 @@ func New(c *Client, opt Options) *Source {
 	}
 	return &Source{
 		c: c, opt: opt, now: time.Now,
-		series: map[string]map[string]string{},
-		failed: map[string]time.Time{},
+		series:  map[string]map[string]string{},
+		failed:  map[string]time.Time{},
+		posters: map[string]string{}, posterFailed: map[string]time.Time{},
 	}
 }
 
@@ -176,6 +180,11 @@ func (s *Source) handle(ctx context.Context, em *emitter, sessions []rawSession,
 		}
 		s.shown = rs.ID
 		v := toSession(rs, series, s.opt.Name)
+		if s.opt.Art {
+			if id := artItemID(rs); id != "" {
+				v.ArtURL = s.poster(ctx, id)
+			}
+		}
 		cur = &v
 	}
 	sess, ok := em.next(cur)
@@ -255,4 +264,38 @@ func (s *Source) visible(sessions []rawSession) []rawSession {
 		}
 	}
 	return own
+}
+
+// artItemID is the item whose poster represents the playback: the series for
+// an episode, the album for a track, the item itself for a movie.
+func artItemID(rs rawSession) string {
+	it := rs.NowPlayingItem
+	switch it.Type {
+	case "Episode":
+		if it.SeriesID != "" {
+			return it.SeriesID
+		}
+	case "Audio":
+		return it.AlbumID
+	}
+	return it.ID
+}
+
+// poster returns the cached poster URL of an item, "" when unknown. A failed
+// lookup is retried after seriesRetryAfter.
+func (s *Source) poster(ctx context.Context, itemID string) string {
+	if u, ok := s.posters[itemID]; ok {
+		return u
+	}
+	if at, bad := s.posterFailed[itemID]; bad && s.now().Sub(at) < seriesRetryAfter {
+		return ""
+	}
+	u, err := s.c.PosterURL(ctx, itemID)
+	if err != nil {
+		s.posterFailed[itemID] = s.now()
+		return ""
+	}
+	delete(s.posterFailed, itemID)
+	s.posters[itemID] = u
+	return u
 }

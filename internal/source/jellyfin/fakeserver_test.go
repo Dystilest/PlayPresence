@@ -36,6 +36,7 @@ type fakeServer struct {
 	requests     []recorded
 	qc           quickConnectState
 	meStatus     int               // non-zero: /Users/Me answers with it (API keys have no user)
+	posters      map[string]string // item id -> public image URL (RemoteImages)
 	wsRefused    bool              // /socket refuses the upgrade
 	sockets      []*websocket.Conn // connected WebSocket clients
 	wsReceived   []string          // text frames received from clients
@@ -47,7 +48,7 @@ func newFakeServer(t *testing.T, prefix string) *fakeServer {
 	t.Helper()
 	f := &fakeServer{
 		t: t, prefix: prefix, validToken: "good-token",
-		sessionsJSON: "[]", series: map[string]map[string]string{},
+		sessionsJSON: "[]", series: map[string]map[string]string{}, posters: map[string]string{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("/System/Info/Public", f.publicInfo)
@@ -64,6 +65,7 @@ func newFakeServer(t *testing.T, prefix string) *fakeServer {
 		_ = json.NewEncoder(w).Encode(map[string]string{"Id": "u1", "Name": "Samy"})
 	}))
 	mux.HandleFunc("/socket", f.auth(f.socket))
+	mux.HandleFunc("/Items/{id}/RemoteImages", f.auth(f.remoteImages))
 	f.qc.enabled = true
 	f.qc.pendingPolls = 1
 	f.registerQuickConnect(mux)
@@ -245,4 +247,15 @@ func (f *fakeServer) items(w http.ResponseWriter, r *http.Request) {
 		items = append(items, map[string]any{"Id": r.URL.Query().Get("ids"), "ProviderIds": ids})
 	}
 	_ = json.NewEncoder(w).Encode(map[string]any{"Items": items})
+}
+
+func (f *fakeServer) remoteImages(w http.ResponseWriter, r *http.Request) {
+	f.mu.Lock()
+	u, ok := f.posters[r.PathValue("id")]
+	f.mu.Unlock()
+	images := []map[string]any{{"ProviderName": "Skip", "Url": "http://insecure.example/x.jpg", "Type": "Primary"}}
+	if ok {
+		images = append(images, map[string]any{"ProviderName": "TheMovieDb", "Url": u, "Type": "Primary", "Language": "en"})
+	}
+	_ = json.NewEncoder(w).Encode(map[string]any{"Images": images, "TotalRecordCount": len(images)})
 }

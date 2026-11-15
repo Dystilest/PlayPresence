@@ -184,3 +184,27 @@ func TestMeReturnsTheTokenOwner(t *testing.T) {
 		t.Errorf("err = %v, want ErrUnauthorized", err)
 	}
 }
+
+func TestPosterURLPicksTheFirstHTTPSImage(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.posters["m1"] = "https://image.example/p.jpg"
+
+	got, err := client(t, f, "good-token").PosterURL(ctx(t), "m1")
+
+	if err != nil || got != "https://image.example/p.jpg" {
+		t.Fatalf("got %q, err %v", got, err)
+	}
+	if q := f.seen()[0].RawQuery; !strings.Contains(q, "type=Primary") {
+		t.Errorf("query %q lacks type=Primary", q)
+	}
+}
+
+func TestPosterURLWithoutAnyHTTPSImageIsEmptyNotAnError(t *testing.T) {
+	f := newFakeServer(t, "")
+
+	got, err := client(t, f, "good-token").PosterURL(ctx(t), "none")
+
+	if err != nil || got != "" {
+		t.Fatalf("got %q, err %v, want empty and nil", got, err)
+	}
+}
