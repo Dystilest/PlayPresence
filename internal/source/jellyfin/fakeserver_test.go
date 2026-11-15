@@ -34,6 +34,7 @@ type fakeServer struct {
 	sessionsCode int                          // non-zero: /Sessions answers with it
 	bigBody      bool                         // /Sessions answers with a 5 MiB body
 	requests     []recorded
+	qc           quickConnectState
 	wsRefused    bool              // /socket refuses the upgrade
 	sockets      []*websocket.Conn // connected WebSocket clients
 	wsReceived   []string          // text frames received from clients
@@ -52,6 +53,9 @@ func newFakeServer(t *testing.T, prefix string) *fakeServer {
 	mux.HandleFunc("/Sessions", f.auth(f.sessions))
 	mux.HandleFunc("/Items", f.auth(f.items))
 	mux.HandleFunc("/socket", f.auth(f.socket))
+	f.qc.enabled = true
+	f.qc.pendingPolls = 1
+	f.registerQuickConnect(mux)
 	var h http.Handler = mux
 	if prefix != "" {
 		h = http.StripPrefix(prefix, mux)
