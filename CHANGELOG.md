@@ -4,6 +4,10 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [0.1.0-beta.1] - 2026-11-15
+
+First public pre-release: the core and the Jellyfin integration. Plex and Emby are not available yet.
+
 ### Added
 
 - Built-in Discord applications: nothing to create, the one named after your server shows after "Watching" (`discord.app_id` stays available to use your own).
@@ -18,3 +22,11 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 - Credential storage in the OS credential store, with an encrypted-file fallback.
 - Command line: `run` (with `--demo`), `doctor`, `version`.
 - Documentation: installation, privacy, FAQ, architecture, guide to adding a media server, contribution guide, security policy.
+
+### Known limitations
+
+- Only Jellyfin is supported. Plex and Emby are planned.
+- Verified against a real Jellyfin server for movies, pause and resume, posters and the built-in Discord application. Episodes (season posters) and music have been tested against simulated servers only.
+- The Discord application is chosen once at startup: with several server types configured together, the generic "PlayPresence" application is used.
+- Posters come from the image sources the Jellyfin server itself uses; without a match, a generic image is shown.
+- The Windows binaries are not signed, so SmartScreen may ask for confirmation. The Docker image is experimental.
