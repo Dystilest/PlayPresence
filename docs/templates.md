@@ -14,7 +14,7 @@ This page describes how a session is shown on Discord today. Customisable templa
 - A progress bar is shown while playing, drawn from a start and end time.
 - While **paused**, there is no progress bar and the state line reads `Paused · 12:34` (or `1:02:03` past an hour).
 - When playback **stops**, the presence is removed.
-- Details and state are cut at 128 characters with an ellipsis, never in the middle of a character.
+- Details, state and tooltips are cut at 128 UTF-16 code units (an emoji counts as 2) with an ellipsis, never in the middle of a character.
 - An empty title is shown as `Unknown`.
 
 ## Buttons

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf16"
 	"unicode/utf8"
 
 	"github.com/Dystilest/PlayPresence/internal/session"
@@ -202,18 +203,22 @@ func TestRenderNeverExceedsTwoButtons(t *testing.T) {
 	}
 }
 
-func TestTruncateIsRuneSafe(t *testing.T) {
+// units counts UTF-16 code units, the unit JavaScript clients (and likely
+// Discord) use for string lengths.
+func units(s string) int { return len(utf16.Encode([]rune(s))) }
+
+func TestTruncateStaysWithinTheLimitInUTF16UnitsAndNeverSplitsARune(t *testing.T) {
 	inputs := map[string]string{
 		"cjk":   strings.Repeat("日本語", 100),
-		"emoji": strings.Repeat("🎬", 300),
+		"emoji": strings.Repeat("🎬", 300), // 2 UTF-16 units each
 		"ascii": strings.Repeat("a", 300),
 	}
 	for name, in := range inputs {
 		t.Run(name, func(t *testing.T) {
-			got := truncate(in, MaxTextRunes)
+			got := truncate(in, MaxTextUnits)
 
-			if n := utf8.RuneCountInString(got); n != MaxTextRunes {
-				t.Errorf("rune count = %d, want %d", n, MaxTextRunes)
+			if n := units(got); n > MaxTextUnits || n < MaxTextUnits-1 {
+				t.Errorf("UTF-16 length = %d, want %d or %d", n, MaxTextUnits-1, MaxTextUnits)
 			}
 			if !utf8.ValidString(got) {
 				t.Error("result is not valid UTF-8")
@@ -226,23 +231,27 @@ func TestTruncateIsRuneSafe(t *testing.T) {
 }
 
 func TestTruncateLeavesShortTextAlone(t *testing.T) {
-	if got := truncate("Heat", MaxTextRunes); got != "Heat" {
+	if got := truncate("Heat", MaxTextUnits); got != "Heat" {
 		t.Errorf("got %q", got)
 	}
-	exact := strings.Repeat("x", MaxTextRunes)
-	if got := truncate(exact, MaxTextRunes); got != exact {
+	exact := strings.Repeat("x", MaxTextUnits)
+	if got := truncate(exact, MaxTextUnits); got != exact {
 		t.Error("text of exactly the limit must be unchanged")
+	}
+	emojis := strings.Repeat("🎬", MaxTextUnits/2) // exactly 128 units
+	if got := truncate(emojis, MaxTextUnits); got != emojis {
+		t.Error("emoji text of exactly the limit in UTF-16 units must be unchanged")
 	}
 }
 
 func TestRenderTruncatesLongTitle(t *testing.T) {
 	s := movie()
-	s.Title = strings.Repeat("日", 300)
+	s.Title = strings.Repeat("🎬", 300)
 
 	a, _ := Render(s, "", now)
 
-	if n := utf8.RuneCountInString(a.Details); n > MaxTextRunes {
-		t.Errorf("details has %d runes, want <= %d", n, MaxTextRunes)
+	if n := units(a.Details); n > MaxTextUnits {
+		t.Errorf("details has %d UTF-16 units, want <= %d", n, MaxTextUnits)
 	}
 }
 

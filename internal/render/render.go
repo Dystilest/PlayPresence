@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf16"
 	"unicode/utf8"
 
 	"github.com/Dystilest/PlayPresence/internal/session"
@@ -20,8 +21,9 @@ const (
 
 // Discord field limits.
 const (
-	// MaxTextRunes bounds details and state so they stay on one line.
-	MaxTextRunes   = 128
+	// MaxTextUnits bounds details, state and tooltips, counted in UTF-16 code
+	// units (the conservative reading of Discord's limit: an emoji counts 2).
+	MaxTextUnits   = 128
 	maxButtons     = 2
 	maxButtonLabel = 32
 	maxButtonURL   = 512
@@ -90,9 +92,9 @@ func Render(s session.Session, art string, now time.Time) (Activity, bool) {
 		a.Start, a.End = &start, &end
 	}
 
-	a.Details = truncate(a.Details, MaxTextRunes)
-	a.State = truncate(a.State, MaxTextRunes)
-	a.LargeText = truncate(a.LargeText, MaxTextRunes)
+	a.Details = truncate(a.Details, MaxTextUnits)
+	a.State = truncate(a.State, MaxTextUnits)
+	a.LargeText = truncate(a.LargeText, MaxTextUnits)
 	return a, true
 }
 
@@ -147,12 +149,31 @@ func clock(d time.Duration) string {
 	return fmt.Sprintf("%02d:%02d", m, sec)
 }
 
-// truncate shortens s to at most max runes, ending with an ellipsis, without
-// ever splitting a multi-byte character.
+// utf16Len counts the UTF-16 code units of s.
+func utf16Len(s string) int {
+	n := 0
+	for _, r := range s {
+		n += utf16.RuneLen(r)
+	}
+	return n
+}
+
+// truncate shortens s to at most max UTF-16 code units, ending with an
+// ellipsis, without ever splitting a character.
 func truncate(s string, max int) string {
-	if utf8.RuneCountInString(s) <= max {
+	if utf16Len(s) <= max {
 		return s
 	}
-	runes := []rune(s)
-	return strings.TrimRight(string(runes[:max-1]), " ") + "…"
+	budget := max - 1 // room for the ellipsis (one unit)
+	var b strings.Builder
+	used := 0
+	for _, r := range s {
+		w := utf16.RuneLen(r)
+		if used+w > budget {
+			break
+		}
+		b.WriteRune(r)
+		used += w
+	}
+	return strings.TrimRight(b.String(), " ") + "…"
 }

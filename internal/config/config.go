@@ -134,6 +134,17 @@ func decodeError(path string, err error) error {
 	return fmt.Errorf("config: decode %s: %w", path, err)
 }
 
+// hasSecretQuery reports whether the URL carries a parameter that looks like a
+// credential (for example X-Plex-Token or api_key).
+func hasSecretQuery(u *url.URL) bool {
+	for key := range u.Query() {
+		if looksSecret(key) {
+			return true
+		}
+	}
+	return false
+}
+
 func looksSecret(name string) bool {
 	n := strings.ToLower(name)
 	for _, frag := range []string{"token", "password", "passwd", "secret", "api_key", "apikey"} {
@@ -168,9 +179,13 @@ func (c Config) Validate() error {
 		if !slices.Contains(SourceKinds, s.Kind) {
 			return fmt.Errorf("config: sources.%s.kind must be one of %s, got %q", name, strings.Join(SourceKinds, ", "), s.Kind)
 		}
+		// Error messages never echo the URL: it may be a mistyped secret.
 		u, err := url.Parse(s.URL)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return fmt.Errorf("config: sources.%s.url must be an http or https URL, got %q", name, s.URL)
+			return fmt.Errorf("config: sources.%s.url must be an http or https URL such as http://host:8096", name)
+		}
+		if u.User != nil || hasSecretQuery(u) {
+			return fmt.Errorf("config: sources.%s.url must not contain credentials (user:password@ or a token or key parameter); credentials are kept in the OS credential store (see docs/privacy.md)", name)
 		}
 	}
 	for _, name := range c.Presence.Priority {

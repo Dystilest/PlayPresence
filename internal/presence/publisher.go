@@ -2,6 +2,7 @@ package presence
 
 import (
 	"context"
+	"errors"
 	"reflect"
 	"sync"
 	"time"
@@ -44,6 +45,11 @@ type Publisher struct {
 	backoffBase time.Duration
 	backoffCap  time.Duration
 	refresh     time.Duration
+
+	// OnError, when set before Run, is called from the publishing goroutine
+	// for every failed attempt (Discord unreachable, refused handshake,
+	// rejected activity). It must not block.
+	OnError func(error)
 
 	wake chan struct{}
 
@@ -126,6 +132,21 @@ func (p *Publisher) Run(ctx context.Context) error {
 		p.mu.Unlock()
 
 		if err := p.publish(ctx, target); err != nil {
+			if p.OnError != nil {
+				p.OnError(err)
+			}
+			var rejected *RejectedError
+			if errors.As(err, &rejected) {
+				// Discord will refuse this payload every time: give up on it and
+				// clear what is displayed rather than leave a stale activity.
+				p.mu.Lock()
+				if sameActivity(p.desired, target) {
+					p.desired = nil
+				}
+				p.dirty = !sameActivity(p.desired, p.lastSent)
+				p.mu.Unlock()
+				continue
+			}
 			failures++
 			select {
 			case <-ctx.Done():

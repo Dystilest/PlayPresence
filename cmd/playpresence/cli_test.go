@@ -132,6 +132,55 @@ func TestRunDemoPublishesAWatchingActivityAndClearsOnExit(t *testing.T) {
 	}
 }
 
+// syncBuffer is a bytes.Buffer safe for a writer goroutine and a reading test.
+type syncBuffer struct {
+	mu sync.Mutex
+	b  bytes.Buffer
+}
+
+func (s *syncBuffer) Write(p []byte) (int, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.b.Write(p)
+}
+
+func (s *syncBuffer) String() string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.b.String()
+}
+
+func TestRunTellsYouWhyNothingShowsWhenDiscordIsUnreachable(t *testing.T) {
+	var out bytes.Buffer
+	errOut := &syncBuffer{}
+	e := env{stdout: &out, stderr: errOut, candidates: []string{"fake"},
+		dial: func(string) (net.Conn, error) { return nil, os.ErrNotExist }}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan int, 1)
+	noConfig := filepath.Join(t.TempDir(), "none.toml")
+
+	go func() {
+		done <- runWith(ctx, []string{"run", "--demo", "--app-id", "1234567890", "--config", noConfig}, e)
+	}()
+
+	deadline := time.Now().Add(3 * time.Second)
+	for !strings.Contains(errOut.String(), "not running") {
+		if time.Now().After(deadline) {
+			t.Fatalf("stderr = %q, want a message saying Discord is not running", errOut.String())
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	time.Sleep(100 * time.Millisecond)
+	if n := strings.Count(errOut.String(), "not running"); n != 1 {
+		t.Errorf("message printed %d times, want it deduplicated to 1", n)
+	}
+	cancel()
+	if code := <-done; code != 0 {
+		t.Errorf("exit code = %d, want 0", code)
+	}
+}
+
 func TestRunWithInvalidConfigExitsOneWithoutStackTrace(t *testing.T) {
 	path := writeConfig(t, "[presence]\nmin_interval = \"1s\"\n")
 	var out, errOut bytes.Buffer

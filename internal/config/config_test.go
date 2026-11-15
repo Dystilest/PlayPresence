@@ -133,6 +133,42 @@ func TestValidate(t *testing.T) {
 	}
 }
 
+func TestSourceURLMustNotCarryCredentialsAndErrorsDoNotEchoThem(t *testing.T) {
+	tests := []struct {
+		name, url, secret, want string
+	}{
+		{"userinfo", "http://alice:SECRETPASS@host:8096", "SECRETPASS", "credential store"},
+		{"user only", "http://SECRETUSER@host:8096", "SECRETUSER", "credential store"},
+		{"token query", "http://host:32400/?X-Plex-Token=SECRETTOKEN", "SECRETTOKEN", "credential store"},
+		{"api key query", "http://host:8096/?api_key=SECRETKEY", "SECRETKEY", "credential store"},
+		{"malformed value", "SECRET-no-scheme", "SECRET-no-scheme", "http or https URL"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := Default()
+			c.Sources = map[string]SourceConfig{"home": {Kind: "plex", URL: tt.url}}
+
+			err := c.Validate()
+
+			if err == nil || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("err = %v, want it to mention %q", err, tt.want)
+			}
+			if strings.Contains(err.Error(), tt.secret) {
+				t.Errorf("error %q must not echo the secret value", err)
+			}
+		})
+	}
+}
+
+func TestSourceURLWithPathAndPortIsAccepted(t *testing.T) {
+	c := Default()
+	c.Sources = map[string]SourceConfig{"home": {Kind: "jellyfin", URL: "https://media.example.org:8920/jellyfin"}}
+
+	if err := c.Validate(); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestLoadRunsValidation(t *testing.T) {
 	path := write(t, "[presence]\nmin_interval = \"1s\"\n")
 

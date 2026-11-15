@@ -175,6 +175,41 @@ func TestConnectWithoutDiscordReturnsErrNotRunning(t *testing.T) {
 	}
 }
 
+func TestRejectedActivityIsReportedAndNotRetriedOnAFreshConnection(t *testing.T) {
+	calls := 0
+	f := &fakeDiscord{t: t, reply: func(msg map[string]any) map[string]any {
+		calls++
+		if calls == 1 {
+			return map[string]any{"cmd": msg["cmd"], "evt": nil}
+		}
+		return map[string]any{"evt": "ERROR", "data": map[string]any{"code": 4000, "message": "bad details"}}
+	}}
+	c := newTestClient(f)
+	defer c.Close()
+	if err := c.SetActivity(ctx(t), render.Activity{Details: "fine"}); err != nil {
+		t.Fatal(err)
+	}
+
+	err := c.SetActivity(ctx(t), render.Activity{Details: "refused"})
+
+	var rej *RejectedError
+	if !errors.As(err, &rej) || rej.Message != "bad details" {
+		t.Fatalf("err = %v, want a *RejectedError carrying Discord's message", err)
+	}
+	setCalls, handshakes := 0, 0
+	for _, m := range f.messages() {
+		if m["cmd"] == "SET_ACTIVITY" {
+			setCalls++
+		}
+		if m["client_id"] != nil {
+			handshakes++
+		}
+	}
+	if setCalls != 2 || handshakes != 1 {
+		t.Errorf("SET_ACTIVITY=%d handshakes=%d, want 2 and 1: a rejection must not trigger a reconnect and resend", setCalls, handshakes)
+	}
+}
+
 func TestClearSendsNullActivity(t *testing.T) {
 	f := &fakeDiscord{t: t}
 	c := newTestClient(f)

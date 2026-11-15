@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"sort"
 	"time"
@@ -76,6 +77,7 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 	client := presence.NewIPCClient(cfg.Discord.AppID, e.dial, e.candidates)
 	defer client.Close()
 	pub := presence.NewPublisher(client, time.Duration(cfg.Presence.MinInterval), presence.RealClock{})
+	pub.OnError = publishErrorReporter(e.stderr)
 	orch := app.NewOrchestrator(sources, cfg.Presence.Priority, nil, pub, presence.RealClock{})
 
 	ctx, cancel := context.WithCancel(ctx)
@@ -94,6 +96,24 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 		return 1
 	}
 	return 0
+}
+
+// publishErrorReporter returns a callback that tells the user why nothing
+// shows on Discord, printing each distinct problem once instead of on every
+// retry. It is called from the single publishing goroutine.
+func publishErrorReporter(w io.Writer) func(error) {
+	var last string
+	return func(err error) {
+		msg := err.Error()
+		if errors.Is(err, presence.ErrNotRunning) {
+			msg = "Discord is not running; will keep retrying (run `playpresence doctor` for help)"
+		}
+		if msg == last {
+			return
+		}
+		last = msg
+		fmt.Fprintf(w, "playpresence: %s\n", msg)
+	}
 }
 
 func buildSources(cfg config.Config, demo bool) ([]source.Source, error) {

@@ -2,6 +2,7 @@ package presence
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -193,6 +194,56 @@ func TestCurrentActivityIsResentAfterAConnectionProblem(t *testing.T) {
 		if c.details != "steady" {
 			t.Errorf("call %d = %+v, want the current activity each time", i, c)
 		}
+	}
+}
+
+func TestRejectedActivityIsDroppedAndStaleOneCleared(t *testing.T) {
+	f := &fakeClient{errs: []error{nil, &RejectedError{Code: 4000, Message: "bad details"}}}
+	p := newPub(f, 10*time.Millisecond)
+	start(t, p)
+	p.Update(act("A"))
+	eventually(t, "A sent", func() bool { return len(f.snapshot()) == 1 })
+
+	p.Update(act("bad"))
+
+	eventually(t, "bad attempted then stale A cleared", func() bool {
+		c := f.snapshot()
+		return len(c) == 3 && c[1].details == "bad" && c[2].clear
+	})
+	time.Sleep(80 * time.Millisecond)
+	if n := len(f.snapshot()); n != 3 {
+		t.Fatalf("calls = %d, want 3: a rejected payload must not be retried forever", n)
+	}
+
+	p.Update(act("good"))
+
+	eventually(t, "next different activity goes through", func() bool {
+		c := f.snapshot()
+		return len(c) == 4 && c[3].details == "good"
+	})
+}
+
+func TestOnErrorReceivesPublishFailures(t *testing.T) {
+	f := &fakeClient{errs: []error{ErrNotRunning, ErrNotRunning}}
+	p := newPub(f, time.Millisecond)
+	var mu sync.Mutex
+	var got []error
+	p.OnError = func(err error) {
+		mu.Lock()
+		defer mu.Unlock()
+		got = append(got, err)
+	}
+	start(t, p)
+
+	p.Update(act("x"))
+
+	eventually(t, "two reported errors then a success", func() bool {
+		mu.Lock()
+		defer mu.Unlock()
+		return len(got) == 2 && len(f.snapshot()) == 3
+	})
+	if !errors.Is(got[0], ErrNotRunning) {
+		t.Errorf("first error = %v", got[0])
 	}
 }
 

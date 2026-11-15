@@ -105,7 +105,8 @@ func (c *IPCClient) send(ctx context.Context, activity *activityPayload) error {
 		}
 	}
 	err := c.roundTrip(deadline, activity)
-	if err != nil && reused && ctx.Err() == nil {
+	var rejected *RejectedError
+	if err != nil && reused && ctx.Err() == nil && !errors.As(err, &rejected) {
 		// The connection may have gone stale (Discord restarted): retry once on a fresh one.
 		_ = c.disconnect()
 		if cerr := c.connect(deadline); cerr != nil {
@@ -183,9 +184,21 @@ func (c *IPCClient) roundTrip(deadline time.Time, activity *activityPayload) err
 		return err
 	}
 	if resp.Evt == "ERROR" {
-		return fmt.Errorf("presence: discord error %d: %s", resp.Data.Code, resp.Data.Message)
+		return &RejectedError{Code: resp.Data.Code, Message: resp.Data.Message}
 	}
 	return nil
+}
+
+// RejectedError means Discord understood the request but refused the
+// activity (for example an invalid field). Retrying the same payload on a
+// new connection cannot help.
+type RejectedError struct {
+	Code    int
+	Message string
+}
+
+func (e *RejectedError) Error() string {
+	return fmt.Sprintf("presence: discord rejected the activity (code %d): %s", e.Code, e.Message)
 }
 
 type response struct {

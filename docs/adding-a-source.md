@@ -14,7 +14,7 @@ type Source interface {
 `Watch`:
 
 - sends a `session.Session` on `out` **every time something changes** (state, item, a seek, a periodic position refresh);
-- sends a session with `State: session.StateStopped` (or simply stops sending) when nothing plays any more;
+- **must send a session with `State: session.StateStopped` when playback ends**. The orchestrator keeps the last session a source sent until it receives a stopped one (or the source returns an error), so a source that merely goes quiet leaves the presence on screen;
 - returns an error when the backend is lost (connection refused, token rejected). The orchestrator clears that source's session and restarts it with backoff, so do not retry forever inside `Watch`;
 - must return promptly when `ctx` is cancelled, including while blocked on `out`.
 
@@ -33,18 +33,29 @@ type Source struct {
 func (s *Source) Name() string { return s.name }
 
 func (s *Source) Watch(ctx context.Context, out chan<- session.Session) error {
+    var last *session.Session // what we reported last, to detect the end of playback
     for {
-        sessions, err := s.fetch(ctx) // one authenticated read request
+        current, err := s.fetch(ctx) // one authenticated read request; nil when nothing plays
         if err != nil {
             return err
         }
-        for _, sess := range sessions {
+        var toSend *session.Session
+        switch {
+        case current != nil:
+            toSend = current
+        case last != nil: // playback just ended: say so explicitly
+            stopped := *last
+            stopped.State = session.StateStopped
+            toSend = &stopped
+        }
+        if toSend != nil {
             select {
-            case out <- sess:
+            case out <- *toSend:
             case <-ctx.Done():
                 return ctx.Err()
             }
         }
+        last = current
         select {
         case <-time.After(5 * time.Second):
         case <-ctx.Done():
