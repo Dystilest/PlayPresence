@@ -148,6 +148,7 @@ type rawItem struct {
 	Type              string            `json:"Type"`
 	SeriesName        string            `json:"SeriesName"`
 	SeriesID          string            `json:"SeriesId"`
+	SeasonID          string            `json:"SeasonId"`
 	ParentIndexNumber int               `json:"ParentIndexNumber"`
 	IndexNumber       int               `json:"IndexNumber"`
 	ProductionYear    int               `json:"ProductionYear"`

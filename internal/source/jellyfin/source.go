@@ -181,8 +181,10 @@ func (s *Source) handle(ctx context.Context, em *emitter, sessions []rawSession,
 		s.shown = rs.ID
 		v := toSession(rs, series, s.opt.Name)
 		if s.opt.Art {
-			if id := artItemID(rs); id != "" {
-				v.ArtURL = s.poster(ctx, id)
+			for _, id := range artItemIDs(rs) {
+				if v.ArtURL = s.poster(ctx, id); v.ArtURL != "" {
+					break
+				}
 			}
 		}
 		cur = &v
@@ -266,19 +268,27 @@ func (s *Source) visible(sessions []rawSession) []rawSession {
 	return own
 }
 
-// artItemID is the item whose poster represents the playback: the series for
-// an episode, the album for a track, the item itself for a movie.
-func artItemID(rs rawSession) string {
+// artItemIDs lists the items whose poster can represent the playback, best
+// first: season, series then episode for an episode; the album for a track;
+// the item itself for a movie.
+func artItemIDs(rs rawSession) []string {
 	it := rs.NowPlayingItem
 	switch it.Type {
 	case "Episode":
-		if it.SeriesID != "" {
-			return it.SeriesID
+		var ids []string
+		for _, id := range []string{it.SeasonID, it.SeriesID, it.ID} {
+			if id != "" {
+				ids = append(ids, id)
+			}
 		}
+		return ids
 	case "Audio":
-		return it.AlbumID
+		if it.AlbumID != "" {
+			return []string{it.AlbumID}
+		}
+		return nil
 	}
-	return it.ID
+	return []string{it.ID}
 }
 
 // poster returns the cached poster URL of an item, "" when unknown. A failed

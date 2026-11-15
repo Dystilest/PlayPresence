@@ -424,3 +424,24 @@ func TestPosterDisabledMakesNoRequest(t *testing.T) {
 		t.Errorf("%d poster requests with art disabled", n)
 	}
 }
+
+var seasonEpisode = strings.Replace(playingEpisode, `"SeriesId":"ser1",`, `"SeriesId":"ser1","SeasonId":"sea1",`, 1)
+
+func TestEpisodePosterPrefersTheSeasonThenFallsBackToTheSeries(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.posters["sea1"] = "https://image.example/season1.jpg"
+	f.posters["ser1"] = "https://image.example/series.jpg"
+	f.setSessions(seasonEpisode)
+	out, _, _ := run(t, f, "good-token", Options{Art: true})
+	if s := recv(t, out); s.ArtURL != "https://image.example/season1.jpg" {
+		t.Fatalf("with a season poster: ArtURL = %q", s.ArtURL)
+	}
+
+	f2 := newFakeServer(t, "")
+	f2.posters["ser1"] = "https://image.example/series.jpg" // the season has none
+	f2.setSessions(seasonEpisode)
+	out2, _, _ := run(t, f2, "good-token", Options{Art: true})
+	if s := recv(t, out2); s.ArtURL != "https://image.example/series.jpg" {
+		t.Errorf("without a season poster: ArtURL = %q, want the series poster", s.ArtURL)
+	}
+}
