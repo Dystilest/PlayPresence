@@ -2,6 +2,14 @@ module github.com/Dystilest/PlayPresence
 
 go 1.27.4
 
-require github.com/Microsoft/go-winio v0.6.4
+require (
+	github.com/Microsoft/go-winio v0.6.4
+	github.com/zalando/go-keyring v0.2.8
+	golang.org/x/crypto v0.59.0
+)
 
-require golang.org/x/sys v0.49.0 // indirect
+require (
+	github.com/danieljoos/wincred v1.2.3 // indirect
+	github.com/godbus/dbus/v5 v5.2.2 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+)
