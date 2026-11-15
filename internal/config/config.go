@@ -72,7 +72,7 @@ type ArtConfig struct {
 type SourceConfig struct {
 	Kind     string `toml:"kind" doc:"Server type: jellyfin, plex or emby."`
 	URL      string `toml:"url" doc:"Base URL of the server, http or https."`
-	User     string `toml:"user" doc:"Only show activity of this server user. Empty means any user."`
+	User     string `toml:"user" doc:"Server user whose activity is shown. Empty means the account you signed in with; use \"*\" to show every session the token can see."`
 	Disabled bool   `toml:"disabled" doc:"Set to true to keep the entry but ignore it."`
 }
 

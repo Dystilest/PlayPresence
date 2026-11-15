@@ -23,14 +23,14 @@ const (
 	  "ParentIndexNumber":1,"IndexNumber":2,"RunTimeTicks":30000000000},
 	 "PlayState":{"PositionTicks":0}}]`
 	twoDevices = `[
-	 {"Id":"old","UserName":"Samy","LastActivityDate":"2026-11-15T09:00:00Z",
+	 {"Id":"old","UserId":"u1","UserName":"Samy","LastActivityDate":"2026-11-15T09:00:00Z",
 	  "NowPlayingItem":{"Id":"a","Name":"Old Movie","Type":"Movie","RunTimeTicks":7200000000},"PlayState":{"PositionTicks":0}},
-	 {"Id":"new","UserName":"Samy","LastActivityDate":"2026-11-15T10:00:00Z",
+	 {"Id":"new","UserId":"u1","UserName":"Samy","LastActivityDate":"2026-11-15T10:00:00Z",
 	  "NowPlayingItem":{"Id":"b","Name":"New Movie","Type":"Movie","RunTimeTicks":7200000000},"PlayState":{"PositionTicks":0}}]`
 	oneDeviceStopped = `[
-	 {"Id":"old","UserName":"Samy","LastActivityDate":"2026-11-15T09:00:00Z",
+	 {"Id":"old","UserId":"u1","UserName":"Samy","LastActivityDate":"2026-11-15T09:00:00Z",
 	  "NowPlayingItem":{"Id":"a","Name":"Old Movie","Type":"Movie","RunTimeTicks":7200000000},"PlayState":{"PositionTicks":0}},
-	 {"Id":"new","UserName":"Samy","LastActivityDate":"2026-11-15T10:05:00Z"}]`
+	 {"Id":"new","UserId":"u1","UserName":"Samy","LastActivityDate":"2026-11-15T10:05:00Z"}]`
 )
 
 // run starts the source and returns its output channel and a way to wait for
@@ -322,5 +322,60 @@ func TestTokenNeverInURL(t *testing.T) {
 		if !strings.Contains(r.Auth, `Token="good-token"`) {
 			t.Errorf("request %s lacks the Authorization header", r.Path)
 		}
+	}
+}
+
+// A token that can see other people's sessions (an administrator's) must still
+// show only its owner's playback unless told otherwise.
+const (
+	ownAndOthers = `[
+	 {"Id":"mine","UserId":"u1","UserName":"Samy","LastActivityDate":"2026-11-15T10:00:00Z",
+	  "NowPlayingItem":{"Id":"a","Name":"My Movie","Type":"Movie","RunTimeTicks":7200000000},"PlayState":{"PositionTicks":0}},
+	 {"Id":"theirs","UserId":"u2","UserName":"Kenzy","LastActivityDate":"2026-11-15T11:00:00Z",
+	  "NowPlayingItem":{"Id":"b","Name":"Their Movie","Type":"Movie","RunTimeTicks":7200000000},"PlayState":{"PositionTicks":0}}]`
+)
+
+func TestDefaultsToTheTokenOwnersSessions(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.setSessions(ownAndOthers)
+
+	out, _, _ := run(t, f, "good-token", Options{})
+
+	if s := recv(t, out); s.Title != "My Movie" {
+		t.Errorf("got %q, want the token owner's movie, not another user's", s.Title)
+	}
+}
+
+func TestStarMeansEverySessionTheTokenCanSee(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.setSessions(ownAndOthers)
+
+	out, _, _ := run(t, f, "good-token", Options{User: "*"})
+
+	if s := recv(t, out); s.Title != "Their Movie" {
+		t.Errorf("got %q, want the most recent session of anyone", s.Title)
+	}
+}
+
+func TestExplicitUserFilterBeatsTheOwner(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.setSessions(ownAndOthers)
+
+	out, _, _ := run(t, f, "good-token", Options{User: "kenzy"})
+
+	if s := recv(t, out); s.Title != "Their Movie" {
+		t.Errorf("got %q", s.Title)
+	}
+}
+
+func TestAPIKeyWithoutAUserSeesEverySession(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.meStatus = 400 // an API key has no user
+	f.setSessions(ownAndOthers)
+
+	out, _, _ := run(t, f, "good-token", Options{})
+
+	if s := recv(t, out); s.Title != "Their Movie" {
+		t.Errorf("got %q, want no owner filtering without a user", s.Title)
 	}
 }

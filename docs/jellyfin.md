@@ -57,7 +57,7 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
 
 - Only **movies**, **episodes** and **music tracks** are shown. Other item types (books, live TV channels, music videos) are ignored.
 - If several devices are playing at once, the one with the most recent activity is shown. When it stops while another keeps playing, the other one takes over.
-- `user` restricts the display to one Jellyfin user name (case-insensitive):
+- By default only the playback of the account you signed in with is shown, even when the token (an administrator's, say) can see other people's sessions. Set `user` to show another Jellyfin user name (case-insensitive) instead, or `user = "*"` to show every session the token can see (the most recently active one wins). An API key has no account behind it, so with an API key every visible session is considered unless `user` is set:
 
   ```toml
   [sources.home]
@@ -65,8 +65,6 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
   url = "http://192.168.1.10:8096"
   user = "samy"
   ```
-
-  Left empty, **every session visible to the token** is considered. A token belonging to a non-administrator only sees that user's own sessions, so for most people nothing needs to be set; on a server where you use an administrator token, set `user` so that other people's playback is not shown on your profile.
 
 ## What is displayed
 

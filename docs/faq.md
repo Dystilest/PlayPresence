@@ -47,4 +47,4 @@ The server no longer accepts the stored token (revoked, or the server was reinst
 
 ## It shows what someone else is watching
 
-On a Jellyfin server, an administrator token sees every user's sessions. Set `user = "your name"` in the source section; see [Jellyfin](jellyfin.md#which-sessions-are-shown).
+By default PlayPresence shows only the account you signed in with. If you see someone else's playback you probably set `user = "*"` or use an API key; set `user = "your name"`, see [Jellyfin](jellyfin.md#which-sessions-are-shown).

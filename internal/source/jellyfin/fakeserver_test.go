@@ -35,6 +35,7 @@ type fakeServer struct {
 	bigBody      bool                         // /Sessions answers with a 5 MiB body
 	requests     []recorded
 	qc           quickConnectState
+	meStatus     int               // non-zero: /Users/Me answers with it (API keys have no user)
 	wsRefused    bool              // /socket refuses the upgrade
 	sockets      []*websocket.Conn // connected WebSocket clients
 	wsReceived   []string          // text frames received from clients
@@ -53,6 +54,13 @@ func newFakeServer(t *testing.T, prefix string) *fakeServer {
 	mux.HandleFunc("/Sessions", f.auth(f.sessions))
 	mux.HandleFunc("/Items", f.auth(f.items))
 	mux.HandleFunc("/Users/Me", f.auth(func(w http.ResponseWriter, _ *http.Request) {
+		f.mu.Lock()
+		ms := f.meStatus
+		f.mu.Unlock()
+		if ms != 0 {
+			http.Error(w, "no user", ms)
+			return
+		}
 		_ = json.NewEncoder(w).Encode(map[string]string{"Id": "u1", "Name": "Samy"})
 	}))
 	mux.HandleFunc("/socket", f.auth(f.socket))

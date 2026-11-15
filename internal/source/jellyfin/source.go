@@ -24,7 +24,7 @@ const (
 // Options configures a Source.
 type Options struct {
 	Name         string        // source name shown in sessions (default "jellyfin")
-	User         string        // only this user's sessions; empty means every visible session
+	User         string        // user name to show; empty means the token's own user, "*" every visible session
 	PollInterval time.Duration // REST polling period when WebSocket is unavailable (default 5 s)
 	Refresh      time.Duration // heartbeat re-send period (default 30 s)
 }
@@ -38,6 +38,7 @@ type Source struct {
 	series map[string]map[string]string // series id -> provider ids
 	failed map[string]time.Time         // series id -> last failed lookup
 	shown  string                       // Id of the session currently displayed
+	owner  string                       // user id of the token (empty: unknown, e.g. an API key)
 }
 
 // New builds a Source around c.
@@ -78,6 +79,9 @@ func redact(err error) error {
 // Watch implements source.Source.
 func (s *Source) Watch(ctx context.Context, out chan<- session.Session) error {
 	em := newEmitter(s.now, s.opt.Refresh)
+	if err := s.resolveOwner(ctx); err != nil {
+		return err
+	}
 
 	conn, resp, err := websocket.Dial(ctx, s.c.url("socket", nil), &websocket.DialOptions{
 		HTTPClient: s.c.hc,
@@ -165,7 +169,7 @@ func (s *Source) poll(ctx context.Context, out chan<- session.Session, em *emitt
 func (s *Source) handle(ctx context.Context, em *emitter, sessions []rawSession, out chan<- session.Session) error {
 	var cur *session.Session
 	s.shown = ""
-	if rs, ok := pick(sessions, s.opt.User, s.shown); ok {
+	if rs, ok := pick(s.visible(sessions), s.filterName(), s.shown); ok {
 		var series map[string]string
 		if id, need := needsSeries(rs); need {
 			series = s.seriesIDs(ctx, rs.UserID, id)
@@ -203,4 +207,52 @@ func (s *Source) seriesIDs(ctx context.Context, userID, seriesID string) map[str
 	delete(s.failed, seriesID)
 	s.series[seriesID] = ids
 	return ids
+}
+
+// resolveOwner learns which user the token belongs to, so that by default only
+// that user's playback is shown. An API key has no user: the owner stays
+// unknown and every visible session is considered.
+func (s *Source) resolveOwner(ctx context.Context) error {
+	s.owner = ""
+	if s.opt.User != "" {
+		return nil // an explicit filter (or "*") decides
+	}
+	u, err := s.c.Me(ctx)
+	switch {
+	case errors.Is(err, ErrUnauthorized):
+		return fmt.Errorf("jellyfin: %w", ErrUnauthorized)
+	case err != nil:
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
+		var se statusError
+		if errors.As(err, &se) {
+			return nil // no user behind this token
+		}
+		return err
+	}
+	s.owner = u.ID
+	return nil
+}
+
+// filterName is the user name to match; "*" means any user.
+func (s *Source) filterName() string {
+	if s.opt.User == "*" {
+		return ""
+	}
+	return s.opt.User
+}
+
+// visible keeps the token owner's sessions when the owner is known.
+func (s *Source) visible(sessions []rawSession) []rawSession {
+	if s.owner == "" {
+		return sessions
+	}
+	var own []rawSession
+	for _, rs := range sessions {
+		if rs.UserID == s.owner {
+			own = append(own, rs)
+		}
+	}
+	return own
 }

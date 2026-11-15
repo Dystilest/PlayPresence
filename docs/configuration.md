@@ -20,5 +20,5 @@ Credentials (server tokens, optional API keys) are **never** stored in this file
 | `art.resolvers` | list of strings | `server`, `plex`, `tvmaze`, `itunes`, `musicbrainz`, `openlibrary` | Artwork resolvers tried in order until one returns an image. Available: server, plex, tvmaze, itunes, musicbrainz, openlibrary, tmdb, fanart, declared_url, upload. |
 | `sources.<name>.kind` | string | empty | Server type: jellyfin, plex or emby. |
 | `sources.<name>.url` | string | empty | Base URL of the server, http or https. |
-| `sources.<name>.user` | string | empty | Only show activity of this server user. Empty means any user. |
+| `sources.<name>.user` | string | empty | Server user whose activity is shown. Empty means the account you signed in with; use "*" to show every session the token can see. |
 | `sources.<name>.disabled` | boolean | `false` | Set to true to keep the entry but ignore it. |
