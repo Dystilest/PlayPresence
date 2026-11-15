@@ -10,8 +10,10 @@ import (
 	"os/signal"
 	"runtime"
 	"syscall"
+	"time"
 
 	"github.com/Dystilest/PlayPresence/internal/presence"
+	"github.com/Dystilest/PlayPresence/internal/secrets"
 	"github.com/Dystilest/PlayPresence/internal/version"
 )
 
@@ -20,6 +22,7 @@ const usage = `usage: playpresence <command> [flags]
 commands:
   run       watch your media servers and publish the presence (flags: --config, --demo, --app-id)
   doctor    check the configuration, Discord and sources (flag: --config)
+  auth      sign in to a media server: auth jellyfin --source NAME (flags: --config, --token-stdin)
   version   print the version
 `
 
@@ -27,14 +30,18 @@ commands:
 // replace it.
 type env struct {
 	stdout, stderr io.Writer
+	stdin          io.Reader
 	dial           func(path string) (net.Conn, error)
 	candidates     []string
+	secrets        secrets.Store // nil: opened on demand (OS keyring or encrypted file)
+	qcPoll         time.Duration // Quick Connect poll period; zero means the default
 }
 
 func defaultEnv(stdout, stderr io.Writer) env {
 	return env{
 		stdout:     stdout,
 		stderr:     stderr,
+		stdin:      os.Stdin,
 		dial:       presence.DefaultDial,
 		candidates: presence.PipeCandidates(runtime.GOOS, os.Getenv),
 	}
@@ -66,6 +73,8 @@ func runWith(ctx context.Context, args []string, e env) int {
 		return cmdRun(ctx, args[1:], e)
 	case "doctor":
 		return cmdDoctor(ctx, args[1:], e)
+	case "auth":
+		return cmdAuth(ctx, args[1:], e)
 	default:
 		fmt.Fprintf(e.stderr, "unknown command %q\n%s", args[0], usage)
 		return 2
