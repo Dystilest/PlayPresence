@@ -1,0 +1,56 @@
+name: Bug report
+description: Something does not work as expected
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. Please run `playpresence doctor` first and read the [FAQ](https://github.com/Dystilest/PlayPresence/blob/main/docs/faq.md).
+        **Redact tokens, API keys and private addresses before pasting anything.**
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: PlayPresence version
+      description: Output of `playpresence version`
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [Windows, macOS, Linux, Docker]
+    validations:
+      required: true
+  - type: input
+    id: discord
+    attributes:
+      label: Discord client
+      description: Stable, PTB, Canary, Vesktop, Flatpak, Snap...
+  - type: input
+    id: server
+    attributes:
+      label: Media server and version
+      description: For example Jellyfin 10.10, Plex 1.41, Emby 4.8
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `playpresence doctor`
+      render: text
+  - type: textarea
+    id: logs
+    attributes:
+      label: Other logs
+      render: text
