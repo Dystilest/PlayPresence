@@ -240,3 +240,53 @@ func TestPositionJitterDoesNotCauseNewUpdatesButSeeksDo(t *testing.T) {
 	f.in <- movie("Heat", session.StatePlaying, 40*time.Minute)
 	eventually(t, "update after seek", func() bool { return len(up.all()) == 2 })
 }
+
+type errLog struct {
+	mu   sync.Mutex
+	list []string
+}
+
+func (l *errLog) add(name string, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.list = append(l.list, name+": "+err.Error())
+}
+
+func (l *errLog) all() []string {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return append([]string(nil), l.list...)
+}
+
+func TestSourceFailureIsReportedWithItsName(t *testing.T) {
+	bad, good, up := newFeed("bad"), newFeed("good"), &recorder{}
+	var log errLog
+	o := orch([]source.Source{bad, good}, nil, &fakeArt{}, up)
+	o.OnSourceError = log.add
+	run(t, o)
+
+	bad.fail <- errors.New("connection refused")
+
+	eventually(t, "failure reported", func() bool { return len(log.all()) >= 1 })
+	if got := log.all()[0]; got != "bad: connection refused" {
+		t.Errorf("reported %q", got)
+	}
+}
+
+func TestCancellationIsNotReportedAsAFailure(t *testing.T) {
+	f, up := newFeed("home"), &recorder{}
+	var log errLog
+	o := orch([]source.Source{f}, nil, &fakeArt{}, up)
+	o.OnSourceError = log.add
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() { _ = o.Run(ctx); close(done) }()
+	eventually(t, "source started", func() bool { return f.runs.Load() == 1 })
+
+	cancel()
+	<-done
+
+	if got := log.all(); len(got) != 0 {
+		t.Errorf("cancellation reported as failure: %v", got)
+	}
+}

@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/Dystilest/PlayPresence/internal/app"
@@ -16,6 +17,7 @@ import (
 	"github.com/Dystilest/PlayPresence/internal/session"
 	"github.com/Dystilest/PlayPresence/internal/source"
 	"github.com/Dystilest/PlayPresence/internal/source/fake"
+	"github.com/Dystilest/PlayPresence/internal/source/jellyfin"
 )
 
 // loadConfig reads the configuration at path (default location when empty).
@@ -79,6 +81,7 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 	pub := presence.NewPublisher(client, time.Duration(cfg.Presence.MinInterval), presence.RealClock{})
 	pub.OnError = publishErrorReporter(e.stderr)
 	orch := app.NewOrchestrator(sources, cfg.Presence.Priority, nil, pub, presence.RealClock{})
+	orch.OnSourceError = sourceErrorReporter(e.stderr)
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -113,6 +116,27 @@ func publishErrorReporter(w io.Writer) func(error) {
 		}
 		last = msg
 		fmt.Fprintf(w, "playpresence: %s\n", msg)
+	}
+}
+
+// sourceErrorReporter returns a callback that tells the user why a source is
+// not delivering, printing each distinct problem once per source instead of on
+// every retry. It is called from the sources' goroutines.
+func sourceErrorReporter(w io.Writer) func(name string, err error) {
+	var mu sync.Mutex
+	last := map[string]string{}
+	return func(name string, err error) {
+		msg := err.Error()
+		if errors.Is(err, jellyfin.ErrUnauthorized) {
+			msg = fmt.Sprintf("token rejected: run `playpresence auth jellyfin --source %s`", name)
+		}
+		mu.Lock()
+		defer mu.Unlock()
+		if last[name] == msg {
+			return
+		}
+		last[name] = msg
+		fmt.Fprintf(w, "playpresence: source %s: %s\n", name, msg)
 	}
 }
 

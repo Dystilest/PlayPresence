@@ -42,6 +42,10 @@ type Orchestrator struct {
 	up      Updater
 	clock   presence.Clock
 
+	// OnSourceError, when set before Run, is called from a source's goroutine
+	// after each failed Watch (never for context cancellation).
+	OnSourceError func(name string, err error)
+
 	backoffBase time.Duration
 	backoffCap  time.Duration
 }
@@ -219,11 +223,14 @@ func (o *Orchestrator) runSource(ctx context.Context, idx int, src source.Source
 			}
 		}()
 
-		_ = src.Watch(ctx, ch)
+		err := src.Watch(ctx, ch)
 		close(ch)
 		<-fwdDone
 		if ctx.Err() != nil {
 			return
+		}
+		if err != nil && o.OnSourceError != nil {
+			o.OnSourceError(src.Name(), err)
 		}
 
 		select {
