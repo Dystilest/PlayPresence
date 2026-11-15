@@ -160,11 +160,11 @@ func utf16Len(s string) int {
 
 // truncate shortens s to at most max UTF-16 code units, ending with an
 // ellipsis, without ever splitting a character.
-func truncate(s string, max int) string {
-	if utf16Len(s) <= max {
+func truncate(s string, limit int) string {
+	if utf16Len(s) <= limit {
 		return s
 	}
-	budget := max - 1 // room for the ellipsis (one unit)
+	budget := limit - 1 // room for the ellipsis (one unit)
 	var b strings.Builder
 	used := 0
 	for _, r := range s {

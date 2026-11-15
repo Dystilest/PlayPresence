@@ -80,7 +80,7 @@ func TestFileStoreWrongPassphraseFailsAndLeaksNothing(t *testing.T) {
 	if err == nil || errors.Is(err, ErrNotFound) {
 		t.Fatalf("err = %v, want a decryption error distinct from ErrNotFound", err)
 	}
-	raw, rerr := os.ReadFile(path)
+	raw, rerr := os.ReadFile(path) //nolint:gosec // test reads its own temp file
 	if rerr != nil {
 		t.Fatal(rerr)
 	}

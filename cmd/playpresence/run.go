@@ -78,7 +78,7 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 	}
 
 	client := presence.NewIPCClient(cfg.Discord.AppID, e.dial, e.candidates)
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 	minInterval := time.Duration(cfg.Presence.MinInterval)
 	if e.minInterval > 0 {
 		minInterval = e.minInterval // test hook; the config enforces its own floor

@@ -266,7 +266,7 @@ func TestContextCancelStopsPromptlyEvenWhileBlockedOnOut(t *testing.T) {
 	start := time.Now()
 	cancel()
 
-	waitDone(t, done)
+	_ = waitDone(t, done)
 	if time.Since(start) > time.Second {
 		t.Errorf("took %v to stop", time.Since(start))
 	}

@@ -30,7 +30,7 @@ func (f *fakeDiscord) dial(string) (net.Conn, error) {
 }
 
 func (f *fakeDiscord) serve(c net.Conn) {
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	for {
 		op, body, err := DecodeFrame(c)
 		if err != nil {
@@ -85,7 +85,7 @@ func ctx(t *testing.T) context.Context {
 func TestSetActivityHandshakeAndPayload(t *testing.T) {
 	f := &fakeDiscord{t: t}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 	start := time.UnixMilli(1_700_000_000_000)
 	end := start.Add(90 * time.Minute)
 	a := render.Activity{
@@ -140,7 +140,7 @@ func TestSetActivityHandshakeAndPayload(t *testing.T) {
 func TestConnectOnlyPerformsTheHandshake(t *testing.T) {
 	f := &fakeDiscord{t: t}
 	c := newTestClient(f)
-	defer c.Close()
+	defer func() { _ = c.Close() }()
 
 	if err := c.Connect(ctx(t)); err != nil {
 		t.Fatalf("Connect: %v", err)

@@ -81,7 +81,7 @@ func jellyfinDevice(st secrets.Store) (jellyfin.Device, error) {
 
 func cmdAuth(ctx context.Context, args []string, e env) int {
 	if len(args) == 0 || args[0] != "jellyfin" {
-		fmt.Fprintln(e.stderr, "usage: playpresence auth jellyfin --source NAME [--config PATH] [--token-stdin]")
+		_, _ = fmt.Fprintln(e.stderr, "usage: playpresence auth jellyfin --source NAME [--config PATH] [--token-stdin]")
 		return 2
 	}
 	fs := flag.NewFlagSet("auth jellyfin", flag.ContinueOnError)
@@ -96,22 +96,22 @@ func cmdAuth(ctx context.Context, args []string, e env) int {
 		return 2
 	}
 	if *name == "" {
-		fmt.Fprintln(e.stderr, "playpresence: --source is required")
+		_, _ = fmt.Fprintln(e.stderr, "playpresence: --source is required")
 		return 2
 	}
 
 	cfg, _, err := loadConfig(*cfgPath, false)
 	if err != nil {
-		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 	sc, ok := cfg.Sources[*name]
 	if !ok {
-		fmt.Fprintf(e.stderr, "playpresence: source %q is not in the configuration: add a [sources.%s] section\n", *name, *name)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: source %q is not in the configuration: add a [sources.%s] section\n", *name, *name)
 		return 1
 	}
 	if sc.Kind != "jellyfin" {
-		fmt.Fprintf(e.stderr, "playpresence: source %q is not a jellyfin source\n", *name)
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: source %q is not a jellyfin source\n", *name)
 		return 1
 	}
 	st, err := openSecrets(e)
@@ -152,7 +152,7 @@ func cmdAuth(ctx context.Context, args []string, e env) int {
 	if login.UserName != "" {
 		fmt.Fprintf(e.stdout, "Signed in as %s. The token is stored in the credential store, not in the configuration.\n", login.UserName)
 	} else {
-		fmt.Fprintln(e.stdout, "Token verified and stored in the credential store, not in the configuration.")
+		_, _ = fmt.Fprintln(e.stdout, "Token verified and stored in the credential store, not in the configuration.")
 	}
 	return 0
 }
@@ -172,7 +172,7 @@ func loginWithQuickConnect(ctx context.Context, e env, url string, dev jellyfin.
 	case errors.Is(err, jellyfin.ErrQuickConnectDisabled):
 		return login, errors.New("this server has Quick Connect disabled: enable it in the Jellyfin dashboard (General), or create an API key there and pipe it to `playpresence auth jellyfin --source NAME --token-stdin`")
 	case errors.Is(err, context.DeadlineExceeded):
-		return login, errors.New("Quick Connect timed out before the code was approved")
+		return login, errors.New("quick connect timed out before the code was approved")
 	}
 	return login, err
 }

@@ -96,7 +96,7 @@ func DefaultPath() (string, error) {
 
 // Load reads, decodes (strictly) and validates the file at path.
 func Load(path string) (Config, error) {
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) //nolint:gosec // the path is the user's own config location
 	if err != nil {
 		return Config{}, fmt.Errorf("config: read %s: %w", path, err)
 	}

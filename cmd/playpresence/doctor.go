@@ -71,8 +71,8 @@ func cmdDoctor(ctx context.Context, args []string, e env) int {
 		report("OK", "config", path)
 	}
 
-	switch {
-	case cfg.Discord.AppID == "":
+	switch cfg.Discord.AppID {
+	case "":
 		report("WARN", "discord", "skipped: discord.app_id is not set")
 	default:
 		dctx, cancel := context.WithTimeout(ctx, doctorDiscordTimeout)

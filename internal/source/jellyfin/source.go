@@ -92,7 +92,7 @@ func (s *Source) Watch(ctx context.Context, out chan<- session.Session) error {
 		}
 		return s.poll(ctx, out, em) // WebSocket unavailable: poll instead
 	}
-	defer conn.CloseNow()
+	defer func() { _ = conn.CloseNow() }()
 	return s.listen(ctx, conn, out, em)
 }
 

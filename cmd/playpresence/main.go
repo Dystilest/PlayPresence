@@ -64,7 +64,7 @@ func run(args []string, stdout, stderr io.Writer) int {
 // runWith dispatches a command. Exit codes: 0 ok, 1 runtime error, 2 usage error.
 func runWith(ctx context.Context, args []string, e env) int {
 	if len(args) == 0 {
-		fmt.Fprint(e.stderr, usage)
+		_, _ = fmt.Fprint(e.stderr, usage)
 		return 2
 	}
 	switch args[0] {

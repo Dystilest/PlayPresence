@@ -14,8 +14,8 @@ type Limiter struct {
 }
 
 // NewLimiter returns a limiter that allows one call per min interval.
-func NewLimiter(min time.Duration, now func() time.Time) *Limiter {
-	return &Limiter{min: min, now: now}
+func NewLimiter(interval time.Duration, now func() time.Time) *Limiter {
+	return &Limiter{min: interval, now: now}
 }
 
 // Allow reports whether a call may proceed now. When it may not, wait is the

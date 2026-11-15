@@ -27,7 +27,7 @@ func newFakeDiscord() *fakeDiscord { return &fakeDiscord{got: make(chan map[stri
 func (f *fakeDiscord) dial(string) (net.Conn, error) {
 	client, server := net.Pipe()
 	go func() {
-		defer server.Close()
+		defer func() { _ = server.Close() }()
 		for {
 			op, body, err := presence.DecodeFrame(server)
 			if err != nil {
