@@ -240,8 +240,18 @@ func (c *Client) PosterURL(ctx context.Context, itemID string) (string, error) {
 	}
 	for _, im := range out.Images {
 		if strings.HasPrefix(im.URL, "https://") && len(im.URL) <= maxArtURL {
-			return im.URL, nil
+			return modestSize(im.URL), nil
 		}
 	}
 	return "", nil
+}
+
+// modestSize asks TMDb's image host for a 500 px wide poster instead of the
+// original file, which can weigh several megabytes: Discord shows it tiny.
+func modestSize(u string) string {
+	const orig = "https://image.tmdb.org/t/p/original/"
+	if strings.HasPrefix(u, orig) {
+		return "https://image.tmdb.org/t/p/w500/" + strings.TrimPrefix(u, orig)
+	}
+	return u
 }

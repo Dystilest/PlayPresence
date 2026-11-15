@@ -208,3 +208,14 @@ func TestPosterURLWithoutAnyHTTPSImageIsEmptyNotAnError(t *testing.T) {
 		t.Fatalf("got %q, err %v, want empty and nil", got, err)
 	}
 }
+
+func TestPosterURLAsksTMDbForAModestSize(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.posters["m1"] = "https://image.tmdb.org/t/p/original/abc123.jpg"
+
+	got, err := client(t, f, "good-token").PosterURL(ctx(t), "m1")
+
+	if err != nil || got != "https://image.tmdb.org/t/p/w500/abc123.jpg" {
+		t.Fatalf("got %q, err %v, want the w500 variant", got, err)
+	}
+}
