@@ -12,7 +12,7 @@ Discord shows a presence on behalf of an application, and its name appears after
 
 1. Open the [Discord Developer Portal](https://discord.com/developers/applications) and create a **New Application**. The name you choose is what appears in your status ("Watching *name*"), so pick something you like.
 2. Copy the **Application ID** (a long number). This is your `discord.app_id`; put it in the configuration to use it instead of the built-in application.
-3. Optional but recommended: in **Rich Presence > Art Assets**, upload three square images (1024x1024 recommended) named exactly `movie`, `tv` and `music`. They are shown when no artwork can be found for an item.
+3. Optional but recommended: in **Rich Presence > Art Assets**, upload three square images (1024x1024 recommended) named exactly `movie`, `tv` and `music`. They are shown when no artwork can be found for an item. Ready-made ones are in [`assets/discord`](../assets/discord).
 
 ## Install PlayPresence
 

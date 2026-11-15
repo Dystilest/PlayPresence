@@ -17,7 +17,7 @@ The *Release* workflow then:
 
 - builds static binaries (no cgo) for Linux, Windows and macOS on amd64 and arm64 with GoReleaser, publishes the archives and `checksums.txt` on the GitHub release, with an SBOM for each archive and an auto-generated changelog;
 - attests the build provenance of the checksums file;
-- builds and pushes the Docker image to `ghcr.io/<owner>/playpresence` (tags `X.Y.Z`, `X.Y`, `latest`) and attests it.
+- builds and pushes the Docker image to `ghcr.io/<owner>/playpresence` (tags `X.Y.Z`, `X.Y`, and `latest` for stable releases only: pre-release tags such as `-beta.1` never move `latest`) and attests it.
 
 ## Verify a download
 
