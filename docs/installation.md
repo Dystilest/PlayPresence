@@ -33,7 +33,7 @@ go install github.com/Dystilest/PlayPresence/cmd/playpresence@latest
 The image is published with each release. Discord runs on the host, so the container must see Discord's IPC socket; this works on Linux only, by mounting the socket:
 
 ```bash
-docker run --rm \
+docker run --rm --user "$(id -u):$(id -g)" \
   -v "$XDG_RUNTIME_DIR/discord-ipc-0:/tmp/discord-ipc-0" \
   -v "$PWD/config.toml:/config/config.toml:ro" \
   ghcr.io/dystilest/playpresence run --config /config/config.toml
