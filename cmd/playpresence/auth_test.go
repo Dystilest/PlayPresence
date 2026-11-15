@@ -68,6 +68,17 @@ func newFakeJellyfin(t *testing.T) *fakeJellyfin {
 			"AccessToken": jfToken, "User": map[string]string{"Id": "u1", "Name": "Samy"},
 		})
 	})
+	mux.HandleFunc("/Users/Me", func(w http.ResponseWriter, r *http.Request) {
+		m := jfTokenRE.FindStringSubmatch(r.Header.Get("Authorization"))
+		f.mu.Lock()
+		ok := m != nil && m[1] == f.validToken
+		f.mu.Unlock()
+		if !ok {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
+		_ = json.NewEncoder(w).Encode(map[string]string{"Id": "u1", "Name": "Samy"})
+	})
 	mux.HandleFunc("/Sessions", func(w http.ResponseWriter, r *http.Request) {
 		m := jfTokenRE.FindStringSubmatch(r.Header.Get("Authorization"))
 		f.mu.Lock()

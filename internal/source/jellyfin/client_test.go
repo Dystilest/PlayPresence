@@ -171,3 +171,16 @@ func TestSeriesIDsUnknownSeriesIsEmptyNotAnError(t *testing.T) {
 		t.Fatalf("ids = %v, err = %v, want empty and nil", ids, err)
 	}
 }
+
+func TestMeReturnsTheTokenOwner(t *testing.T) {
+	f := newFakeServer(t, "")
+
+	u, err := client(t, f, "good-token").Me(ctx(t))
+
+	if err != nil || u.Name != "Samy" || u.ID != "u1" {
+		t.Fatalf("user = %+v, err = %v", u, err)
+	}
+	if _, err := client(t, f, "wrong").Me(ctx(t)); !errors.Is(err, ErrUnauthorized) {
+		t.Errorf("err = %v, want ErrUnauthorized", err)
+	}
+}

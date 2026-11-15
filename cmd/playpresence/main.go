@@ -35,6 +35,8 @@ type env struct {
 	candidates     []string
 	secrets        secrets.Store // nil: opened on demand (OS keyring or encrypted file)
 	qcPoll         time.Duration // Quick Connect poll period; zero means the default
+	pollInterval   time.Duration // Jellyfin REST polling period; zero means the default
+	minInterval    time.Duration // overrides presence.min_interval (tests only)
 }
 
 func defaultEnv(stdout, stderr io.Writer) env {

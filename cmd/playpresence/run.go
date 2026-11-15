@@ -14,6 +14,7 @@ import (
 	"github.com/Dystilest/PlayPresence/internal/app"
 	"github.com/Dystilest/PlayPresence/internal/config"
 	"github.com/Dystilest/PlayPresence/internal/presence"
+	"github.com/Dystilest/PlayPresence/internal/secrets"
 	"github.com/Dystilest/PlayPresence/internal/session"
 	"github.com/Dystilest/PlayPresence/internal/source"
 	"github.com/Dystilest/PlayPresence/internal/source/fake"
@@ -70,7 +71,7 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 		return 1
 	}
 
-	sources, err := buildSources(cfg, *demo)
+	sources, err := buildSources(cfg, *demo, e)
 	if err != nil {
 		fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
@@ -78,7 +79,11 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 
 	client := presence.NewIPCClient(cfg.Discord.AppID, e.dial, e.candidates)
 	defer client.Close()
-	pub := presence.NewPublisher(client, time.Duration(cfg.Presence.MinInterval), presence.RealClock{})
+	minInterval := time.Duration(cfg.Presence.MinInterval)
+	if e.minInterval > 0 {
+		minInterval = e.minInterval // test hook; the config enforces its own floor
+	}
+	pub := presence.NewPublisher(client, minInterval, presence.RealClock{})
 	pub.OnError = publishErrorReporter(e.stderr)
 	orch := app.NewOrchestrator(sources, cfg.Presence.Priority, nil, pub, presence.RealClock{})
 	orch.OnSourceError = sourceErrorReporter(e.stderr)
@@ -140,21 +145,75 @@ func sourceErrorReporter(w io.Writer) func(name string, err error) {
 	}
 }
 
-func buildSources(cfg config.Config, demo bool) ([]source.Source, error) {
-	if demo {
-		return []source.Source{fake.New("demo", []fake.Step{{Session: demoSession()}})}, nil
-	}
-	names := make([]string, 0, len(cfg.Sources))
+// enabledSources returns the names of the sources that are not disabled, sorted.
+func enabledSources(cfg config.Config) []string {
+	var names []string
 	for name, s := range cfg.Sources {
 		if !s.Disabled {
 			names = append(names, name)
 		}
 	}
+	sort.Strings(names)
+	return names
+}
+
+func buildSources(cfg config.Config, demo bool, e env) ([]source.Source, error) {
+	if demo {
+		return []source.Source{fake.New("demo", []fake.Step{{Session: demoSession()}})}, nil
+	}
+	names := enabledSources(cfg)
 	if len(names) == 0 {
 		return nil, errors.New("no sources configured: add a [sources.<name>] section (see docs/configuration.md) or try --demo")
 	}
-	sort.Strings(names)
-	return nil, fmt.Errorf("source %q: the %s integration is not available in this build yet", names[0], cfg.Sources[names[0]].Kind)
+	var st secrets.Store
+	var out []source.Source
+	for _, name := range names {
+		sc := cfg.Sources[name]
+		if sc.Kind != "jellyfin" {
+			return nil, fmt.Errorf("source %q: the %s integration is not available in this build yet", name, sc.Kind)
+		}
+		if st == nil {
+			var err error
+			if st, err = openSecrets(e); err != nil {
+				return nil, err
+			}
+		}
+		src, err := buildJellyfin(name, sc, st, e.pollInterval)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, src)
+	}
+	return out, nil
+}
+
+// jellyfinClient builds the client of a configured Jellyfin source from the
+// credential store.
+func jellyfinClient(name string, sc config.SourceConfig, st secrets.Store) (*jellyfin.Client, error) {
+	token, err := st.Get(secretService, tokenKey(name))
+	if errors.Is(err, secrets.ErrNotFound) || (err == nil && token == "") {
+		return nil, fmt.Errorf("source %q: not signed in: run `playpresence auth jellyfin --source %s`", name, name)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("source %q: read token: %w", name, err)
+	}
+	dev, err := jellyfinDevice(st)
+	if err != nil {
+		return nil, err
+	}
+	c, err := jellyfin.NewClient(sc.URL, dev, token, nil)
+	if err != nil {
+		return nil, fmt.Errorf("source %q: %w", name, err)
+	}
+	return c, nil
+}
+
+func buildJellyfin(name string, sc config.SourceConfig, st secrets.Store, poll time.Duration) (source.Source, error) {
+	c, err := jellyfinClient(name, sc, st)
+	if err != nil {
+		return nil, err
+	}
+	return jellyfin.New(c, jellyfin.Options{Name: name, User: sc.User, PollInterval: poll}), nil
 }
 
 func demoSession() session.Session {

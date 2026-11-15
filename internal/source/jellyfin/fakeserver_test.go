@@ -52,6 +52,9 @@ func newFakeServer(t *testing.T, prefix string) *fakeServer {
 	mux.HandleFunc("/System/Info/Public", f.publicInfo)
 	mux.HandleFunc("/Sessions", f.auth(f.sessions))
 	mux.HandleFunc("/Items", f.auth(f.items))
+	mux.HandleFunc("/Users/Me", f.auth(func(w http.ResponseWriter, _ *http.Request) {
+		_ = json.NewEncoder(w).Encode(map[string]string{"Id": "u1", "Name": "Samy"})
+	}))
 	mux.HandleFunc("/socket", f.auth(f.socket))
 	f.qc.enabled = true
 	f.qc.pendingPolls = 1

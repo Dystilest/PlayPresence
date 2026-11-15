@@ -201,3 +201,16 @@ func (c *Client) SeriesIDs(ctx context.Context, userID, seriesID string) (map[st
 	}
 	return out.Items[0].ProviderIDs, nil
 }
+
+// User is the account a token belongs to.
+type User struct {
+	ID   string `json:"Id"`
+	Name string `json:"Name"`
+}
+
+// Me calls GET /Users/Me: the owner of the client's token.
+func (c *Client) Me(ctx context.Context) (User, error) {
+	var u User
+	err := c.do(ctx, http.MethodGet, "Users/Me", nil, nil, &u, true)
+	return u, err
+}
