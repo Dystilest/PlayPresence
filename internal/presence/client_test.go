@@ -20,6 +20,7 @@ type fakeDiscord struct {
 	received []map[string]any
 	reply    func(cmd map[string]any) map[string]any // nil -> default OK
 	silent   bool                                    // never answers
+	refuse   bool                                    // answers the handshake with an ERROR event
 }
 
 func (f *fakeDiscord) dial(string) (net.Conn, error) {
@@ -48,6 +49,8 @@ func (f *fakeDiscord) serve(c net.Conn) {
 
 		var resp map[string]any
 		switch {
+		case op == OpHandshake && f.refuse:
+			resp = map[string]any{"evt": "ERROR", "data": map[string]any{"code": 4000, "message": "Invalid Client ID"}}
 		case op == OpHandshake:
 			resp = map[string]any{"evt": "READY", "cmd": "DISPATCH", "data": map[string]any{"user": map[string]any{"username": "tester"}}}
 		case f.reply != nil:
@@ -131,6 +134,44 @@ func TestSetActivityHandshakeAndPayload(t *testing.T) {
 	}
 	if _, has := act["state"]; has {
 		t.Error("empty state must be omitted")
+	}
+}
+
+func TestConnectOnlyPerformsTheHandshake(t *testing.T) {
+	f := &fakeDiscord{t: t}
+	c := newTestClient(f)
+	defer c.Close()
+
+	if err := c.Connect(ctx(t)); err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+
+	msgs := f.messages()
+	if len(msgs) != 1 || msgs[0]["client_id"] != "1234567890" {
+		t.Fatalf("server received %v, want only the handshake", msgs)
+	}
+}
+
+func TestRefusedHandshakeIsNotReportedAsNotRunning(t *testing.T) {
+	f := &fakeDiscord{t: t, refuse: true}
+	c := newTestClient(f)
+	defer c.Close()
+
+	err := c.Connect(ctx(t))
+
+	if err == nil || errors.Is(err, ErrNotRunning) {
+		t.Fatalf("err = %v, want a handshake error distinct from ErrNotRunning", err)
+	}
+	if !contains(err.Error(), "Invalid Client ID") {
+		t.Errorf("err = %v, want it to carry Discord's reason", err)
+	}
+}
+
+func TestConnectWithoutDiscordReturnsErrNotRunning(t *testing.T) {
+	c := NewIPCClient("1", func(string) (net.Conn, error) { return nil, errors.New("no pipe") }, []string{"a"})
+
+	if err := c.Connect(ctx(t)); !errors.Is(err, ErrNotRunning) {
+		t.Fatalf("err = %v, want ErrNotRunning", err)
 	}
 }
 

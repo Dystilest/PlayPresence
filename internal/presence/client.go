@@ -58,6 +58,21 @@ func (c *IPCClient) Clear(ctx context.Context) error {
 	return c.send(ctx, nil)
 }
 
+// Connect opens the connection and performs the handshake without touching
+// the displayed activity. It is a no-op when already connected.
+func (c *IPCClient) Connect(ctx context.Context) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.conn != nil {
+		return nil
+	}
+	deadline := time.Now().Add(defaultTimeout)
+	if d, ok := ctx.Deadline(); ok {
+		deadline = d
+	}
+	return c.connect(deadline)
+}
+
 // Close drops the connection to Discord.
 func (c *IPCClient) Close() error {
 	c.mu.Lock()
@@ -101,7 +116,11 @@ func (c *IPCClient) send(ctx context.Context, activity *activityPayload) error {
 	return err
 }
 
+// connect tries every candidate endpoint. It returns ErrNotRunning only when
+// nothing could be dialed; a reachable Discord that refuses the handshake (for
+// example an invalid application ID) is reported with Discord's own reason.
 func (c *IPCClient) connect(deadline time.Time) error {
+	var handshakeErr error
 	for _, path := range c.candidates {
 		conn, err := c.dial(path)
 		if err != nil {
@@ -111,15 +130,23 @@ func (c *IPCClient) connect(deadline time.Time) error {
 		hs, _ := EncodeFrame(OpHandshake, map[string]any{"v": 1, "client_id": c.appID})
 		if _, err := conn.Write(hs); err != nil {
 			_ = conn.Close()
+			handshakeErr = fmt.Errorf("write handshake: %w", err)
 			continue
 		}
 		resp, err := readResponse(conn)
-		if err != nil || resp.Evt != "READY" {
-			_ = conn.Close()
-			continue
+		switch {
+		case err != nil:
+			handshakeErr = err
+		case resp.Evt != "READY":
+			handshakeErr = fmt.Errorf("discord refused the handshake: %s (code %d)", resp.Data.Message, resp.Data.Code)
+		default:
+			c.conn = conn
+			return nil
 		}
-		c.conn = conn
-		return nil
+		_ = conn.Close()
+	}
+	if handshakeErr != nil {
+		return fmt.Errorf("presence: connected to discord but the handshake failed: %w", handshakeErr)
 	}
 	return ErrNotRunning
 }
