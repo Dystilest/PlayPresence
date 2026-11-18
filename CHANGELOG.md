@@ -4,9 +4,23 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Added
+
+- `playpresence setup`: a guided setup that asks for the server address (pasted straight from the browser is fine), signs in with Quick Connect or an API key, and checks Discord. It never asks for a password, and running it again signs in again or adds another server without duplicating it.
+- `playpresence start`, and a double-click on `playpresence.exe` on Windows: set up when nothing is configured, then run; the window stays open on an error so it can be read.
+- `run` says that it is running and prints what is shown on Discord whenever it changes.
+- `doctor` warns about artwork sources listed in `art.resolvers` that are not available yet.
+- Documentation for non-technical users: step-by-step installation per system, starting with the computer, a roadmap, more FAQ entries.
+
 ### Changed
 
 - The project is scoped to movies and TV series. Music support was removed: a Jellyfin audio item is ignored, the Listening activity type, MusicBrainz links and the music-related artwork resolvers (iTunes, MusicBrainz, Open Library) are gone, and `music` is no longer a fallback image.
+- `art.resolvers` defaults to `["server"]`, the only artwork source available today. The planned ones (`tvmaze`, `tmdb`, `fanart`, ...) are still accepted so existing files load, but `doctor` now says they do nothing yet. The documentation no longer describes artwork services that don't exist.
+- Docker image: the configuration and the encrypted sign-in file live in the directory mounted on `/config`.
+
+### Fixed
+
+- Jellyfin: when a second device starts playing, the session already shown stays on screen instead of being replaced by the most recently active one.
 
 ## [0.1.0-beta.1] - 2026-11-15
 

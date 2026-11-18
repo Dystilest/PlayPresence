@@ -29,4 +29,4 @@ A button whose label exceeds 32 characters or whose link exceeds 512 characters 
 
 ## Images
 
-The large image is the artwork found by your artwork resolvers. If none is found, the application assets `movie` or `tv` are used, so upload those to your Discord application.
+The large image is the poster your media server already uses for the item (for an episode, the season poster, then the series poster). It is sent to Discord as a public image address, never as an address on your server. If no poster is found, the application images `movie` or `tv` are shown; the built-in applications already have them, and if you use your own application, upload them to it ([how](installation.md#use-your-own-discord-application-optional)).

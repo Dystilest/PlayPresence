@@ -1,6 +1,6 @@
 # FAQ and troubleshooting
 
-Run `playpresence doctor` first: it checks the configuration, Discord and the sources, and prints what to fix.
+Run `playpresence doctor` first: it checks the configuration, Discord and your servers, and prints what to fix. Still stuck? [Ask in Discussions](https://github.com/Dystilest/PlayPresence/discussions); there are no silly questions.
 
 ## Nothing shows on my Discord profile
 
@@ -23,7 +23,7 @@ It comes back by itself, usually within a minute and at worst about 75 seconds (
 
 ## The image is the generic one
 
-No artwork was found for that item, or the artwork services in `art.resolvers` are disabled. Upload `movie` and `tv` images to your Discord application so the fallback looks good (see [installation](installation.md#use-your-own-discord-application-optional)).
+Your media server has no poster with a public address for that item (for example a home video, or an item it couldn't match on TMDb), or posters are turned off (`art.resolvers = []`). Refreshing the item's metadata in Jellyfin often fixes it. More artwork sources are [planned](roadmap.md).
 
 ## Why is the progress bar not updating every second?
 
@@ -39,12 +39,36 @@ In your operating system's credential store, never in the configuration file. Se
 
 ## `run` says "not signed in"
 
-The source has no stored token yet (or it was removed). Run `playpresence auth jellyfin --source NAME`, using the name from your `[sources.NAME]` section.
+The server has no stored sign-in yet (or it was removed). Run `playpresence setup` and enter the same address: it signs you in again without adding a second server.
 
 ## `run` prints "token rejected" and nothing shows
 
-The server no longer accepts the stored token (revoked, or the server was reinstalled). Sign in again with `playpresence auth jellyfin --source NAME`; the other sources keep running meanwhile.
+The server no longer accepts the stored sign-in (revoked, or the server was reinstalled). Run `playpresence setup` again; other servers keep running meanwhile.
 
 ## It shows what someone else is watching
 
 By default PlayPresence shows only the account you signed in with. If you see someone else's playback you probably set `user = "*"` or use an API key; set `user = "your name"`, see [Jellyfin](jellyfin.md#which-sessions-are-shown).
+
+## Windows says "Windows protected your PC"
+
+Windows shows this for programs that aren't signed with a paid code-signing certificate, which PlayPresence doesn't have yet. Click **More info**, then **Run anyway**. You can check that your download is genuine: each release lists checksums and a build attestation (see [releasing](releasing.md#verify-a-download)).
+
+## macOS says the program "cannot be opened"
+
+It isn't signed by Apple yet. In Terminal, in the folder where you extracted it, run `xattr -d com.apple.quarantine playpresence` once.
+
+## The window closes as soon as I open it
+
+A double-clicked `playpresence.exe` stays open, asks its questions, and waits for Enter before closing on an error (older versions just closed). If it still closes, open **Command Prompt** in that folder and type `playpresence start` to read the message.
+
+## How do I start it with my computer?
+
+See [Start automatically](installation.md#start-automatically).
+
+## Does it work with music?
+
+No: PlayPresence is about movies and TV series. Music is ignored on purpose.
+
+## Can I hide a title?
+
+Stop PlayPresence before you watch it (close the window or press Ctrl+C: the status is cleared at once), or turn off **Share my activity** in Discord for a while.
