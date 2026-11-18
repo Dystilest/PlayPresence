@@ -24,8 +24,12 @@ const MinPresenceInterval = 15 * time.Second
 // SourceKinds lists the supported media server kinds.
 var SourceKinds = []string{"jellyfin", "plex", "emby"}
 
-// ArtResolvers lists the supported artwork resolvers, in default order first.
-var ArtResolvers = []string{"server", "plex", "tvmaze", "tmdb", "fanart", "declared_url", "upload"}
+// ArtResolvers lists the artwork resolvers available in this build.
+var ArtResolvers = []string{"server"}
+
+// PlannedArtResolvers are accepted so that a configuration naming them keeps
+// loading once they ship, but they do nothing yet (doctor says so).
+var PlannedArtResolvers = []string{"plex", "tvmaze", "tmdb", "fanart", "declared_url", "upload"}
 
 // Duration is a time.Duration written as text in TOML (for example "15s").
 type Duration time.Duration
@@ -65,7 +69,7 @@ type PresenceConfig struct {
 // ArtConfig configures artwork lookup. API keys are never set here; optional
 // keys (for example TMDb) are stored in the OS credential store.
 type ArtConfig struct {
-	Resolvers []string `toml:"resolvers" doc:"Artwork resolvers tried in order until one returns an image. Available: server, plex, tvmaze, tmdb, fanart, declared_url, upload."`
+	Resolvers []string `toml:"resolvers" doc:"Where posters come from, tried in order. Available today: server (the posters your media server already knows). Planned, accepted but not active yet: tvmaze, tmdb, fanart. An empty list shows the generic image."`
 }
 
 // SourceConfig describes one media server.
@@ -80,7 +84,7 @@ type SourceConfig struct {
 func Default() Config {
 	return Config{
 		Presence: PresenceConfig{MinInterval: Duration(MinPresenceInterval)},
-		Art:      ArtConfig{Resolvers: []string{"server", "plex", "tvmaze"}},
+		Art:      ArtConfig{Resolvers: []string{"server"}},
 		Sources:  map[string]SourceConfig{},
 	}
 }
@@ -194,11 +198,23 @@ func (c Config) Validate() error {
 		}
 	}
 	for _, r := range c.Art.Resolvers {
-		if !slices.Contains(ArtResolvers, r) {
+		if !slices.Contains(ArtResolvers, r) && !slices.Contains(PlannedArtResolvers, r) {
 			return fmt.Errorf("config: art.resolvers has unknown resolver %q", r)
 		}
 	}
 	return nil
+}
+
+// InactiveArtResolvers returns the configured resolvers that this build does
+// not provide yet, in configuration order.
+func (c Config) InactiveArtResolvers() []string {
+	var out []string
+	for _, r := range c.Art.Resolvers {
+		if !slices.Contains(ArtResolvers, r) {
+			out = append(out, r)
+		}
+	}
+	return out
 }
 
 // Discord applications shipped with the program, so that nobody has to create

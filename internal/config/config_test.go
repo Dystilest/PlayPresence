@@ -115,6 +115,7 @@ func TestValidate(t *testing.T) {
 		{"source with bad url", func(c *Config) { c.Sources = map[string]SourceConfig{"a": {Kind: "plex", URL: "ftp://x"}} }, "url"},
 		{"priority names unknown source", func(c *Config) { c.Presence.Priority = []string{"ghost"} }, "ghost"},
 		{"unknown art resolver", func(c *Config) { c.Art.Resolvers = []string{"magic"} }, "magic"},
+		{"planned art resolver still loads", func(c *Config) { c.Art.Resolvers = []string{"server", "tvmaze"} }, ""},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -130,6 +131,17 @@ func TestValidate(t *testing.T) {
 				t.Fatalf("err = %v, want it to mention %q", err, tt.want)
 			}
 		})
+	}
+}
+
+func TestInactiveArtResolversListsOnlyThePlannedOnes(t *testing.T) {
+	c := Default()
+	if got := c.InactiveArtResolvers(); len(got) != 0 {
+		t.Errorf("defaults must only use available resolvers, got inactive %v", got)
+	}
+	c.Art.Resolvers = []string{"tvmaze", "server", "tmdb"}
+	if got := strings.Join(c.InactiveArtResolvers(), ","); got != "tvmaze,tmdb" {
+		t.Errorf("inactive = %q, want tvmaze,tmdb", got)
 	}
 }
 
