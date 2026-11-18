@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Dystilest/PlayPresence/internal/config"
@@ -114,6 +115,9 @@ func cmdDoctor(ctx context.Context, args []string, e env) int {
 	}
 	if others > 0 {
 		report("WARN", "sources", fmt.Sprintf("%d configured for plex or emby; their connectivity checks arrive with those integrations", others))
+	}
+	if inactive := cfg.InactiveArtResolvers(); len(inactive) > 0 {
+		report("WARN", "art", fmt.Sprintf("not available yet, ignored: %s (only \"server\" works today)", strings.Join(inactive, ", ")))
 	}
 
 	if failed {
