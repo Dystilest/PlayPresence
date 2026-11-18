@@ -6,7 +6,7 @@ PlayPresence is a small pipeline. Each stage is a Go package with one job and a 
 source (one per media server)
    |  session.Session on every change
    v
-app.Orchestrator  --- picks the session to show (priority), resolves artwork
+app.Orchestrator  --- picks the session to show (priority), artwork fallback
    |  render.Activity
    v
 presence.Publisher --- coalesces, rate limits, retries, resends
@@ -26,7 +26,7 @@ presence.IPCClient --- Discord's local IPC (named pipe or unix socket)
 | `internal/app` | `Orchestrator`: source supervision, priority, artwork, suppression of redundant updates. |
 | `internal/config` | TOML loading, strict validation, generated reference. |
 | `internal/secrets` | Credential storage: OS keyring, with an encrypted file fallback. |
-| `cmd/playpresence` | The command line: `run`, `doctor`, `version`. |
+| `cmd/playpresence` | The command line: `setup`, `run`, `start`, `doctor`, `auth`, `version`. |
 
 ## Behaviours worth knowing
 

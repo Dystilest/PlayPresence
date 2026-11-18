@@ -1,14 +1,22 @@
 # Contributing to PlayPresence
 
-Thanks for your interest. This project aims to be easy to contribute to: a small codebase, fast tests that need neither Discord nor a media server, and clear conventions.
+Thanks for your interest! This project aims to be easy to contribute to: a small codebase, fast tests that need neither Discord nor a media server, and clear conventions. You don't need to write code to help.
 
 ## Ways to help
+
+### Without writing code
+
+- **Try it and tell us** what worked and what didn't: that's the most useful thing right now.
+- **Answer or ask questions** in [Discussions](https://github.com/Dystilest/PlayPresence/discussions).
+- **Fix the documentation:** if a step confused you, edit the page on GitHub (the pencil icon) and propose the change. No tools needed.
+- **Translate** the documentation.
+
+### With code
 
 - **Report a bug** with the [bug template](https://github.com/Dystilest/PlayPresence/issues/new?template=bug_report.yml). Paste the output of `playpresence doctor` and redact tokens and private addresses.
 - **Suggest a feature** with the feature template. Explain the use case first.
 - **Add a media server**: see [Adding a media server](docs/adding-a-source.md). Jellyfin, Plex and Emby are the priority; others are welcome.
-- **Improve the documentation**: typos, missing steps, translations of the docs.
-- Look for issues labelled `good first issue`.
+- Look for issues labelled `good first issue`, and see the [roadmap](docs/roadmap.md) for what's planned.
 
 For anything larger than a small fix, open an issue first so we can agree on the approach before you invest time.
 
@@ -67,10 +75,10 @@ See [Architecture](docs/architecture.md). In short: `internal/source` (media ser
 
 ```bash
 go run ./cmd/playpresence doctor --config path/to/config.toml
-go run ./cmd/playpresence run --demo --app-id YOUR_APPLICATION_ID
+go run ./cmd/playpresence run --demo
 ```
 
-You need the Discord desktop app running and your own Discord application ID (see [installation](docs/installation.md#create-your-discord-application)).
+You need the Discord desktop app running. `--app-id` is optional: without it the built-in application is used (see [installation](docs/installation.md#use-your-own-discord-application-optional)).
 
 ## Review process
 

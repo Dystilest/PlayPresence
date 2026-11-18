@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
+  - name: Ask a question or get help
+    url: https://github.com/Dystilest/PlayPresence/discussions
+    about: Setup questions, ideas and anything that isn't clearly a bug.
   - name: Report a security vulnerability
     url: https://github.com/Dystilest/PlayPresence/security/advisories/new
     about: Please report vulnerabilities privately, not in a public issue.

@@ -12,16 +12,14 @@ PlayPresence runs on your machine. This page lists everything it can send, and t
 
 | Destination | What is sent | When |
 |---|---|---|
-| Your media server (Jellyfin, Plex, Emby) | Authenticated read requests for the active sessions (Jellyfin: a WebSocket on `/socket`, or `GET /Sessions` when polling; `GET /Items` once per series for link ids; `GET /System/Info/Public` and `GET /Users/Me` from `doctor`; the Quick Connect endpoints during `auth`) | Continuously while running |
-| Your local Discord client | The activity: title, episode, progress, button links, image URL | When playback changes |
-| Public artwork services (keyless) | Title, year and public identifiers (such as a TMDb id) of what you play | Only when an item has no artwork yet; results are cached on disk |
+| Your media server | Authenticated read requests. Jellyfin: a WebSocket on `/socket` (or `GET /Sessions` when polling) for what is playing; `GET /Items` once per series for the TMDb and IMDb ids; `GET /Items/{id}/RemoteImages` once per item for a poster address; `GET /System/Info/Public` and `GET /Users/Me` from `setup` and `doctor`; the Quick Connect endpoints while signing in. | Continuously while running |
+| The Discord app on your computer | The status: title, year, season and episode, progress, button links, poster address | When playback changes, and every minute to survive a Discord restart |
 
-The artwork services are those listed in `art.resolvers` in your [configuration](configuration.md). Remove any you do not want to use; with none enabled, the generic image is shown.
+That's the complete list. PlayPresence itself contacts no other service.
 
-Optional features, **off by default**, change this table:
+**Posters.** Your Jellyfin server knows where its posters come from (usually TMDb). PlayPresence asks your server for that public address (for example an `image.tmdb.org` link) and passes it to Discord, which then downloads the image through its own image proxy. The address of your server is never sent to Discord, and you can turn posters off by setting `art.resolvers = []` in the [configuration](configuration.md).
 
-- An API key for a lookup service (stored in your credential store, never in the configuration file) lets that service see your lookups under your key.
-- A custom image upload target sends the artwork file to the host you choose.
+Planned artwork sources (see the [roadmap](roadmap.md)) will be listed here, with what they receive, before they ship. They will stay opt-in.
 
 ## What Discord does with it
 
@@ -29,8 +27,8 @@ Rich Presence is public on your Discord profile. Anyone who can see your profile
 
 ## Secrets
 
-Server tokens and optional keys are stored in the operating system's credential store (Windows Credential Manager, macOS Keychain, Secret Service on Linux). When none is available (for example in a container), an encrypted file protected by a passphrase you provide is used. Secrets are never written to the configuration file or to logs, and a configuration file that contains a token or key field is refused.
+Server tokens are stored in the operating system's credential store (Windows Credential Manager, macOS Keychain, Secret Service on Linux). When none is available (for example in a container), an encrypted file protected by a passphrase you provide is used. Secrets are never written to the configuration file or to logs, and a configuration file that contains a token or key field is refused.
 
 ## Your media server address
 
-The address of your media server is not sent to Discord or to artwork services. Posters are fetched from public services, not from your server, unless you explicitly declare a public image URL.
+The address of your media server is never sent to Discord, and it is left out of error messages so that a pasted log doesn't reveal it.
