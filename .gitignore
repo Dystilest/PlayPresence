@@ -1,15 +1,36 @@
-# Binaries and build output
+# Build output
 /playpresence
-/playpresence.exe
+/cmd/playpresence/playpresence
+*.exe
 dist/
+
+# Test and profiling output
 *.test
 *.out
+*.prof
+coverage.*
 
-# Local state and secrets
+# Go workspaces are personal
+go.work
+go.work.sum
+
+# Your own configuration and sign-in: never commit them
 config.toml
+secrets.enc
 .env
+.env.*
+
+# Logs
 *.log
 
 # Editors
 .idea/
 .vscode/
+.fleet/
+*.swp
+*~
+
+# Operating systems
+.DS_Store
+Thumbs.db
+desktop.ini
