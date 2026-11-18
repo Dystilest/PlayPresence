@@ -136,17 +136,8 @@ func cmdAuth(ctx context.Context, args []string, e env) int {
 		return 1
 	}
 
-	if err := st.Set(secretService, tokenKey(*name), login.Token); err != nil {
-		_, _ = fmt.Fprintf(e.stderr, "playpresence: store token: %v\n", err)
-		return 1
-	}
-	if login.UserID != "" {
-		err = st.Set(secretService, userIDKey(*name), login.UserID)
-	} else {
-		err = st.Delete(secretService, userIDKey(*name))
-	}
-	if err != nil {
-		_, _ = fmt.Fprintf(e.stderr, "playpresence: store user id: %v\n", err)
+	if err := storeLogin(st, *name, login); err != nil {
+		_, _ = fmt.Fprintf(e.stderr, "playpresence: %v\n", err)
 		return 1
 	}
 	if login.UserName != "" {
@@ -170,7 +161,7 @@ func loginWithQuickConnect(ctx context.Context, e env, url string, dev jellyfin.
 	login, err := jellyfin.QuickConnect(ctx, url, dev, nil, show, poll)
 	switch {
 	case errors.Is(err, jellyfin.ErrQuickConnectDisabled):
-		return login, errors.New("this server has Quick Connect disabled: enable it in the Jellyfin dashboard (General), or create an API key there and pipe it to `playpresence auth jellyfin --source NAME --token-stdin`")
+		return login, hintError{"this server has Quick Connect disabled: enable it in the Jellyfin dashboard (General), or create an API key there and pipe it to `playpresence auth jellyfin --source NAME --token-stdin`", err}
 	case errors.Is(err, context.DeadlineExceeded):
 		return login, errors.New("quick connect timed out before the code was approved")
 	}
@@ -186,6 +177,11 @@ func loginWithToken(ctx context.Context, e env, url string, dev jellyfin.Device)
 	if token == "" {
 		return jellyfin.Login{}, errors.New("--token-stdin: the token on standard input is empty")
 	}
+	return verifyToken(ctx, url, dev, token)
+}
+
+// verifyToken checks an access token or API key against the server.
+func verifyToken(ctx context.Context, url string, dev jellyfin.Device, token string) (jellyfin.Login, error) {
 	c, err := jellyfin.NewClient(url, dev, token, nil)
 	if err != nil {
 		return jellyfin.Login{}, err
@@ -200,3 +196,30 @@ func loginWithToken(ctx context.Context, e env, url string, dev jellyfin.Device)
 	}
 	return jellyfin.Login{Token: token}, nil
 }
+
+// storeLogin saves a successful sign-in to source name in the credential store.
+func storeLogin(st secrets.Store, name string, login jellyfin.Login) error {
+	if err := st.Set(secretService, tokenKey(name), login.Token); err != nil {
+		return fmt.Errorf("store token: %w", err)
+	}
+	var err error
+	if login.UserID != "" {
+		err = st.Set(secretService, userIDKey(name), login.UserID)
+	} else {
+		err = st.Delete(secretService, userIDKey(name))
+	}
+	if err != nil {
+		return fmt.Errorf("store user id: %w", err)
+	}
+	return nil
+}
+
+// hintError replaces an error's text with advice for the user while keeping
+// the original error reachable with errors.Is.
+type hintError struct {
+	msg string
+	err error
+}
+
+func (h hintError) Error() string { return h.msg }
+func (h hintError) Unwrap() error { return h.err }
