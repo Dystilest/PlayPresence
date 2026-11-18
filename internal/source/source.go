@@ -17,15 +17,3 @@ type Source interface {
 	Name() string
 	Watch(ctx context.Context, out chan<- session.Session) error
 }
-
-// Func adapts a function to Source; handy for tests and tiny sources.
-type Func struct {
-	ID string
-	Fn func(ctx context.Context, out chan<- session.Session) error
-}
-
-// Name returns the source name.
-func (f Func) Name() string { return f.ID }
-
-// Watch runs the wrapped function.
-func (f Func) Watch(ctx context.Context, out chan<- session.Session) error { return f.Fn(ctx, out) }

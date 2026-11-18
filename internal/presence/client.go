@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"runtime"
 	"strconv"
 	"sync"
 	"time"
@@ -41,11 +40,6 @@ type IPCClient struct {
 // NewIPCClient builds a client that tries each candidate endpoint in order.
 func NewIPCClient(appID string, dial func(path string) (net.Conn, error), candidates []string) *IPCClient {
 	return &IPCClient{appID: appID, dial: dial, candidates: candidates}
-}
-
-// NewDefaultClient builds a client for the running OS using the standard endpoints.
-func NewDefaultClient(appID string) *IPCClient {
-	return NewIPCClient(appID, DefaultDial, PipeCandidates(runtime.GOOS, os.Getenv))
 }
 
 // SetActivity publishes a.
