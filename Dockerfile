@@ -14,6 +14,9 @@ RUN CGO_ENABLED=0 go build -trimpath \
 FROM gcr.io/distroless/static-debian12:nonroot
 COPY --from=build /out/playpresence /playpresence
 # Discord's IPC socket must be mounted at /tmp/discord-ipc-0 (see docs/installation.md).
+# Mount a directory on /config: the configuration and the encrypted sign-in
+# file live in /config/playpresence and survive the container.
+ENV XDG_CONFIG_HOME=/config
 USER nonroot:nonroot
 ENTRYPOINT ["/playpresence"]
 CMD ["version"]
