@@ -2,6 +2,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"io"
@@ -19,10 +20,14 @@ import (
 
 const usage = `usage: playpresence <command> [flags]
 
+New here? Run "playpresence setup" once, then "playpresence run".
+
 commands:
-  run       watch your media servers and publish the presence (flags: --config, --demo, --app-id)
-  doctor    check the configuration, Discord and sources (flag: --config)
-  auth      sign in to a media server: auth jellyfin --source NAME (flags: --config, --token-stdin)
+  setup     connect your media server step by step (flag: --config)
+  run       show what you watch on Discord until you stop it (flags: --config, --demo, --app-id)
+  start     set up if needed, then run; what a double-click does on Windows (flag: --config)
+  doctor    check the configuration, Discord and your servers, and say what to fix (flag: --config)
+  auth      sign in to a media server again: auth jellyfin --source NAME (flags: --config, --token-stdin)
   version   print the version
 `
 
@@ -51,8 +56,20 @@ func defaultEnv(stdout, stderr io.Writer) env {
 
 func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
-	code := runWith(ctx, os.Args[1:], defaultEnv(os.Stdout, os.Stderr))
+	args := os.Args[1:]
+	// Opened with a double-click: there is no terminal to type commands in,
+	// so set up if needed and run, and keep the window open on failure so the
+	// message can be read.
+	doubleClicked := len(args) == 0 && launchedByDoubleClick()
+	if doubleClicked {
+		args = []string{"start"}
+	}
+	code := runWith(ctx, args, defaultEnv(os.Stdout, os.Stderr))
 	stop()
+	if doubleClicked && code != 0 {
+		_, _ = fmt.Fprint(os.Stdout, "\nPress Enter to close this window.")
+		_, _ = bufio.NewReader(os.Stdin).ReadString('\n')
+	}
 	os.Exit(code)
 }
 
@@ -73,6 +90,10 @@ func runWith(ctx context.Context, args []string, e env) int {
 		return 0
 	case "run":
 		return cmdRun(ctx, args[1:], e)
+	case "setup":
+		return cmdSetup(ctx, args[1:], e)
+	case "start":
+		return cmdStart(ctx, args[1:], e)
 	case "doctor":
 		return cmdDoctor(ctx, args[1:], e)
 	case "auth":

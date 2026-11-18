@@ -172,8 +172,9 @@ type rawSession struct {
 	PlayState        *rawPlayState `json:"PlayState"`
 }
 
-// Sessions calls GET /Sessions.
-func (c *Client) Sessions(ctx context.Context) ([]rawSession, error) {
+// Sessions calls GET /Sessions. Callers outside this package only use it to
+// check that a token is accepted.
+func (c *Client) Sessions(ctx context.Context) ([]rawSession, error) { //nolint:revive // the raw shape stays private to this package
 	var out []rawSession
 	err := c.do(ctx, http.MethodGet, "Sessions", nil, nil, &out, true)
 	return out, err

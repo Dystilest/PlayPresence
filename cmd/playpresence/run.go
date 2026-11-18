@@ -15,6 +15,7 @@ import (
 	"github.com/Dystilest/PlayPresence/internal/app"
 	"github.com/Dystilest/PlayPresence/internal/config"
 	"github.com/Dystilest/PlayPresence/internal/presence"
+	"github.com/Dystilest/PlayPresence/internal/render"
 	"github.com/Dystilest/PlayPresence/internal/secrets"
 	"github.com/Dystilest/PlayPresence/internal/session"
 	"github.com/Dystilest/PlayPresence/internal/source"
@@ -82,8 +83,9 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 	}
 	pub := presence.NewPublisher(client, minInterval, presence.RealClock{})
 	pub.OnError = publishErrorReporter(e.stderr)
-	orch := app.NewOrchestrator(sources, cfg.Presence.Priority, nil, pub, presence.RealClock{})
+	orch := app.NewOrchestrator(sources, cfg.Presence.Priority, nil, &announcer{next: pub, w: e.stdout}, presence.RealClock{})
 	orch.OnSourceError = sourceErrorReporter(e.stderr)
+	_, _ = fmt.Fprintln(e.stdout, "PlayPresence is running. Play a movie or an episode and it shows on your Discord profile. Press Ctrl+C (or close this window) to stop.")
 
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -101,6 +103,29 @@ func cmdRun(ctx context.Context, args []string, e env) int {
 		return 1
 	}
 	return 0
+}
+
+// announcer tells the user what is being shown on Discord, once per change,
+// and passes the activity on. The orchestrator calls it from one goroutine.
+type announcer struct {
+	next app.Updater
+	w    io.Writer
+	last string
+}
+
+func (a *announcer) Update(act *render.Activity) {
+	msg := "Nothing playing: your Discord status is cleared."
+	if act != nil {
+		msg = "Showing on Discord: " + act.Details
+		if act.State != "" {
+			msg += " - " + act.State
+		}
+	}
+	if msg != a.last {
+		a.last = msg
+		_, _ = fmt.Fprintf(a.w, "%s  %s\n", time.Now().Format("15:04"), msg)
+	}
+	a.next.Update(act)
 }
 
 // publishErrorReporter returns a callback that tells the user why nothing
