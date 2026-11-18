@@ -4,6 +4,10 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [0.1.0-beta.2] - 2026-11-18
+
+Easier to set up for everyone: a guided setup, a double-click start on Windows, and documentation written for people who don't use a terminal. Jellyfin remains the only supported server.
+
 ### Added
 
 - `playpresence setup`: a guided setup that asks for the server address (pasted straight from the browser is fine), signs in with Quick Connect or an API key, and checks Discord. It never asks for a password, and running it again signs in again or adds another server without duplicating it.
@@ -21,6 +25,13 @@ All notable changes are documented here. The format follows [Keep a Changelog](h
 ### Fixed
 
 - Jellyfin: when a second device starts playing, the session already shown stays on screen instead of being replaced by the most recently active one.
+
+### Known limitations
+
+- Only Jellyfin is supported. Plex and Emby are planned (see the [roadmap](docs/roadmap.md)).
+- Posters come only from the image sources the Jellyfin server itself uses; without a match, a generic image is shown.
+- Episodes and season posters have been tested against simulated servers only.
+- The Windows and macOS binaries are not signed: Windows SmartScreen and macOS Gatekeeper ask for confirmation the first time. The Docker image is experimental.
 
 ## [0.1.0-beta.1] - 2026-11-15
 
