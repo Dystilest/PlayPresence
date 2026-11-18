@@ -1,8 +1,16 @@
 # PlayPresence
 
+[![Latest release](https://img.shields.io/github/v/release/Dystilest/PlayPresence?include_prereleases&label=download)](https://github.com/Dystilest/PlayPresence/releases)
+[![CI](https://github.com/Dystilest/PlayPresence/actions/workflows/ci.yml/badge.svg)](https://github.com/Dystilest/PlayPresence/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 **Show what you're watching on your Discord profile, straight from your own media server.**
 
+<p align="center"><img src="docs/images/preview.svg" alt="Example: a Discord profile card reading Watching Jellyfin, Severance, S01E02 · Half Loop, with a poster, a progress bar and TMDb and IMDb buttons" width="560"></p>
+
 When you play a movie or an episode on your Jellyfin server, your Discord status shows it, with the poster, the episode, a progress bar and links to TMDb and IMDb. When you pause, it says so. When you stop, it disappears.
+
+New to all this? A **media server** like [Jellyfin](https://jellyfin.org) is a program that streams your own movies and shows to your TV, phone or browser. **Discord** can show what you're doing (a game, music, and with PlayPresence what you watch) on your profile, for your friends to see.
 
 It's free and open source, needs no account and no API key, sends nothing to anyone but your own Discord app, and never changes anything on your server.
 
@@ -32,7 +40,7 @@ It's free and open source, needs no account and no API key, sends nothing to any
    - **Windows:** double-click `playpresence.exe`. If Windows shows "Windows protected your PC", click **More info**, then **Run anyway** ([why?](docs/faq.md#windows-says-windows-protected-your-pc)).
    - **Mac and Linux:** open a terminal in that folder and type `./playpresence setup`.
 
-   It asks for your Jellyfin server's address (the one you open in your browser) and gives you a short code. Enter the code in Jellyfin (profile menu > **Quick Connect**). It never asks for your password.
+   It asks for your Jellyfin server's address (the one you open in your browser; [can't find it?](docs/jellyfin.md#find-your-server-address)) and gives you a short code. Enter the code in Jellyfin (profile menu > **Quick Connect**). It never asks for your password.
 
 3. **Play something.** On Windows, PlayPresence is already running: keep its window open (you can minimize it). On Mac and Linux, type `./playpresence run`. Start a movie or an episode in Jellyfin and look at your Discord profile.
 
@@ -62,6 +70,8 @@ media server --> PlayPresence --> Discord app on your computer --> your profile
 Technical details: [Architecture](docs/architecture.md).
 
 ## Documentation
+
+All guides are listed in the [documentation index](docs/README.md). The most useful ones:
 
 - [Installation](docs/installation.md): every way to install, starting automatically, Docker
 - [Jellyfin guide](docs/jellyfin.md)

@@ -24,9 +24,9 @@ For anything larger than a small fix, open an issue first so we can agree on the
 
 You need:
 
-- Go, at the version in `go.mod`.
+- Go, at the version in `go.mod`. Windows: `winget install GoLang.Go`; macOS: `brew install go`; Linux: your package manager or [go.dev/dl](https://go.dev/dl/).
 - `make` (optional; every target is a plain `go` command you can run by hand).
-- For linting: [golangci-lint](https://golangci-lint.run/). For the race detector: a C compiler (`gcc`), because `-race` needs cgo. CI always runs both.
+- For linting: [golangci-lint](https://golangci-lint.run/) (`go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest`), and for the vulnerability check `go install golang.org/x/vuln/cmd/govulncheck@latest`. For the race detector: a C compiler (`gcc`), because `-race` needs cgo. CI always runs all of them on Windows, macOS and Linux, so it's fine to skip what you can't install.
 
 ```bash
 git clone https://github.com/Dystilest/PlayPresence.git
