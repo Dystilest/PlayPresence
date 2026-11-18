@@ -8,6 +8,15 @@ PlayPresence reads the active playback sessions of a Jellyfin server and shows t
 - Quick Connect enabled on the server (Jellyfin 10.7 or newer), or an API key. Quick Connect is the easiest way: no password is typed into PlayPresence.
 - The Discord setup described in [Installation](installation.md).
 
+## Find your server address
+
+PlayPresence needs the address you use to open Jellyfin in a web browser. It looks like `http://192.168.1.10:8096` (a local address and the port, usually 8096) or `https://jellyfin.example.org` (if your server is reachable from the internet).
+
+- **You already open Jellyfin in a browser:** copy what's in the address bar. Extra text after the port (like `/web/index.html#!/home.html`) is fine: setup removes it.
+- **PlayPresence runs on the same computer as Jellyfin:** use `http://localhost:8096`.
+- **You only use the Jellyfin app (TV, phone):** in the app, open the server or connection settings; the address is shown there. On the server itself, the Jellyfin dashboard shows it under **Dashboard > Networking**.
+- **It works on the server but not on another computer:** both must be on the same network (or VPN), and the server's firewall must allow port 8096.
+
 ## Set up
 
 ### The easy way
