@@ -153,6 +153,23 @@ func TestStopWhileAnotherDevicePlaysKeepsTheOther(t *testing.T) {
 	}
 }
 
+func TestSecondDeviceDoesNotTakeOverTheDisplayedSession(t *testing.T) {
+	f := newFakeServer(t, "")
+	f.setSessions(`[{"Id":"old","UserId":"u1","UserName":"Samy","LastActivityDate":"2026-11-15T09:00:00Z",
+	 "NowPlayingItem":{"Id":"a","Name":"Old Movie","Type":"Movie","RunTimeTicks":7200000000},"PlayState":{"PositionTicks":0}}]`)
+	out, _, _ := run(t, f, "good-token", Options{})
+	if s := recv(t, out); s.Title != "Old Movie" {
+		t.Fatalf("got %+v", s)
+	}
+
+	// A second device starts, more recently active: the first stays on screen.
+	f.setSessions(twoDevices)
+	f.push()
+	expectNothing(t, out)
+	f.push()
+	expectNothing(t, out)
+}
+
 func TestEpisodeUsesSeriesIDsAndTheyAreCached(t *testing.T) {
 	f := newFakeServer(t, "")
 	f.series["ser1"] = map[string]string{"Tmdb": "95396"}

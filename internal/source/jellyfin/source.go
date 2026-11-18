@@ -172,8 +172,9 @@ func (s *Source) poll(ctx context.Context, out chan<- session.Session, em *emitt
 // handle maps the visible sessions to at most one update and sends it.
 func (s *Source) handle(ctx context.Context, em *emitter, sessions []rawSession, out chan<- session.Session) error {
 	var cur *session.Session
+	prev := s.shown
 	s.shown = ""
-	if rs, ok := pick(s.visible(sessions), s.filterName(), s.shown); ok {
+	if rs, ok := pick(s.visible(sessions), s.filterName(), prev); ok {
 		var series map[string]string
 		if id, need := needsSeries(rs); need {
 			series = s.seriesIDs(ctx, rs.UserID, id)
